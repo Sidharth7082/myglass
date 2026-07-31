@@ -183,7 +183,7 @@ void CGlassLayerSurface::sampleAndRedirect(PHLMONITOR monitor, float alpha) {
     DRMFormat tempFormat = (monitor->useFP16()) ? source->m_drmFormat : DRM_FORMAT_ARGB8888;
 
     if (!m_surfaceTempFramebuffer)
-        m_surfaceTempFramebuffer = g_pHyprRenderer->createFB("hyprglass-layer-temp");
+        m_surfaceTempFramebuffer = g_pHyprRenderer->createFB("myglass-layer-temp");
 
     if (m_surfaceTempFramebuffer->m_size.x != monitorWidth || m_surfaceTempFramebuffer->m_size.y != monitorHeight ||
         m_surfaceTempFramebuffer->m_drmFormat != tempFormat)

@@ -47,8 +47,8 @@ hyprctl plugin load $(pwd)/hyprglass.so
 The plugin must be loaded before configuring it. Wrap everything in a guard:
 
 ```lua
-if hl.plugin.hyprglass then
-    local hg = hl.plugin.hyprglass
+if hl.plugin.myglass then
+    local hg = hl.plugin.myglass
 
     hg.config({
         default_theme = "dark",
@@ -90,7 +90,7 @@ end
 _Deprecated as of Hyprland 0.55, but still supported._
 
 ```ini
-plugin:hyprglass {
+plugin:myglass {
     default_theme = dark
     default_preset = clear
     tint_color = 0x8899aa22
@@ -203,43 +203,43 @@ Control the effect, theme, and preset per window via tags.
 
 Override the global `enabled` setting per window via tags:
 
-- `hyprglass_disabled` — force the effect off on this window (wins over `hyprglass_enabled` if both present).
-- `hyprglass_enabled` — force the effect on this window. Useful with global `enabled = false` for a whitelist.
+- `myglass_disabled` — force the effect off on this window (wins over `myglass_enabled` if both present).
+- `myglass_enabled` — force the effect on this window. Useful with global `enabled = false` for a whitelist.
 
 #### Theme
 
 Each window's theme is resolved as:
-1. **Window tag** `hyprglass_theme_light` or `hyprglass_theme_dark`
+1. **Window tag** `myglass_theme_light` or `myglass_theme_dark`
 2. **Fallback** to `default_theme`
 
 #### Preset
 
 Assign via window rules:
-- `hyprglass_preset_<name>` — override `default_preset` for this window
+- `myglass_preset_<name>` — override `default_preset` for this window
 
 #### Examples
 
 **Lua:**
 ```lua
-hl.window_rule({ match = { class = "mpv" },       tag = "+hyprglass_disabled" })
-hl.window_rule({ match = { fullscreen = true },    tag = "+hyprglass_disabled" })
-hl.window_rule({ match = { class = "firefox" },    tag = "+hyprglass_theme_light" })
-hl.window_rule({ match = { class = "myterminal" }, tag = "+hyprglass_preset_high_contrast" })
+hl.window_rule({ match = { class = "mpv" },       tag = "+myglass_disabled" })
+hl.window_rule({ match = { fullscreen = true },    tag = "+myglass_disabled" })
+hl.window_rule({ match = { class = "firefox" },    tag = "+myglass_theme_light" })
+hl.window_rule({ match = { class = "myterminal" }, tag = "+myglass_preset_high_contrast" })
 ```
 
 **Legacy .conf:**
 ```ini
-windowrule = tag +hyprglass_disabled, class:mpv
-windowrule = tag +hyprglass_disabled, fullscreen:1
-windowrule = tag +hyprglass_theme_light, class:firefox
-windowrule = tag +hyprglass_preset_high_contrast, class:myterminal
+windowrule = tag +myglass_disabled, class:mpv
+windowrule = tag +myglass_disabled, fullscreen:1
+windowrule = tag +myglass_theme_light, class:firefox
+windowrule = tag +myglass_preset_high_contrast, class:myterminal
 ```
 
 **On the fly:**
 ```bash
-hyprctl dispatch tagwindow +hyprglass_disabled
-hyprctl dispatch tagwindow +hyprglass_theme_dark
-hyprctl dispatch tagwindow +hyprglass_preset_subtle
+hyprctl dispatch tagwindow +myglass_disabled
+hyprctl dispatch tagwindow +myglass_theme_dark
+hyprctl dispatch tagwindow +myglass_preset_subtle
 ```
 
 ### Presets
@@ -310,7 +310,7 @@ For windows, the plugin integrates with Hyprland's render pass system as a `DECO
 ## Unloading
 
 ```bash
-hyprctl plugin unload /path/to/hyprglass.so
+hyprctl plugin unload /path/to/myglass.so
 ```
 
 ## Notes
@@ -325,7 +325,7 @@ hyprctl plugin unload /path/to/hyprglass.so
 
 The plugin compares its build-time Hyprland ABI signature against the running compositor. The comparison uses the dependency ABI suffix (`_aq_…_hu_…`), not the exact commit hash, so a plugin built against matching headers loads fine on git builds. If it still fails, the reported hashes (shown in the error notification) tell you which dependency versions differ — rebuild the plugin against the headers of the Hyprland you are actually running.
 
-As a last resort, setting `HYPRGLASS_SKIP_VERSION_CHECK=1` downgrades the failure to a warning. The variable must be present in **Hyprland's own environment**: export it from your session manager (uwsm, greetd, …) or set it early in your Hyprland config via the `env` keyword. This is unsupported — a real ABI mismatch can crash Hyprland.
+As a last resort, setting `MYGLASS_SKIP_VERSION_CHECK=1` downgrades the failure to a warning. The variable must be present in **Hyprland's own environment**: export it from your session manager (uwsm, greetd, …) or set it early in your Hyprland config via the `env` keyword. This is unsupported — a real ABI mismatch can crash Hyprland.
 
 ### Build fails inside Hyprland's own headers ("cannot convert 'PHLLS' … to 'bool' … explicit conversion function was not considered")
 

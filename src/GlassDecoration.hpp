@@ -35,6 +35,10 @@ class CGlassDecoration : public IHyprWindowDecoration {
     Vector2D m_lastPosition;
     Vector2D m_lastSize;
 
+    // Scene generation at last blur sample
+    bool     m_hasCachedSample = false;
+    uint64_t m_lastSceneGeneration = 0;
+
     // Whether we currently hold the noblur window property on our window.
     // Glass replaces Hyprland's blur, and Hyprland's cached-blur optimization
     // (blur:new_optimizations) composites translucent windows against a

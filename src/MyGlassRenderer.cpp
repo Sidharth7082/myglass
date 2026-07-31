@@ -42,7 +42,7 @@ void sampleBackground(SP<Render::IFramebuffer>& sampleFramebuffer, SP<Render::IF
     int sampleHeight = std::max(1, fullHeight / downscale);
 
     if (!sampleFramebuffer)
-        sampleFramebuffer = g_pHyprRenderer->createFB("hyprglass-sample");
+        sampleFramebuffer = g_pHyprRenderer->createFB("myglass-sample");
 
     if (sampleFramebuffer->m_size.x != sampleWidth || sampleFramebuffer->m_size.y != sampleHeight)
         sampleFramebuffer->alloc(sampleWidth, sampleHeight, sourceFramebuffer->m_drmFormat);
@@ -103,7 +103,7 @@ void blurBackground(SP<Render::IFramebuffer> sampleFramebuffer, float radius, in
 
     auto& blurTempFramebuffer = g_pGlobalState->blurTempFramebuffer;
     if (!blurTempFramebuffer)
-        blurTempFramebuffer = g_pHyprRenderer->createFB("hyprglass-blur-temp");
+        blurTempFramebuffer = g_pHyprRenderer->createFB("myglass-blur-temp");
 
     if (blurTempFramebuffer->m_size.x != width || blurTempFramebuffer->m_size.y != height)
         blurTempFramebuffer->alloc(width, height, sampleFramebuffer->m_drmFormat);

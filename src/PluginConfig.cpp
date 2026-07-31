@@ -32,7 +32,12 @@ static int handleLuaPreset(lua_State* L);
 static int handleLuaLayer(lua_State* L);
 static int handleLuaConfig(lua_State* L);
 
+#include <hyprland/src/debug/log/Logger.hpp>
+
 void registerConfig(HANDLE handle) {
+    auto cfgType = Config::mgr() ? Config::mgr()->type() : static_cast<Config::eConfigManagerType>(99);
+    Log::logger->log(Hyprutils::CLI::LOG_TRACE, "[myglass] Entering registerConfig(), Config type = {} ({})", (int)cfgType, Config::typeToString(cfgType));
+
     addConfigValue<Config::Values::Int>(handle, ConfigKeys::ENABLED, Config::INTEGER{1});
     addConfigValue<Config::Values::Int>(handle, ConfigKeys::MANAGE_WINDOW_BLUR, Config::INTEGER{1});
     addConfigValue<Config::Values::String>(handle, ConfigKeys::DEFAULT_THEME, Config::STRING{"dark"});
@@ -109,9 +114,20 @@ void registerConfig(HANDLE handle) {
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
     HyprlandAPI::addConfigKeyword(handle, ConfigKeys::PRESET_KEYWORD, handlePresetKeyword, Hyprlang::SHandlerOptions{});
 #pragma GCC diagnostic pop
-    HyprlandAPI::addLuaFunction(handle, "hyprglass", "preset", handleLuaPreset);
-    HyprlandAPI::addLuaFunction(handle, "hyprglass", "layer", handleLuaLayer);
-    HyprlandAPI::addLuaFunction(handle, "hyprglass", "config", handleLuaConfig);
+
+    const bool resPreset = HyprlandAPI::addLuaFunction(handle, "myglass", "preset", handleLuaPreset);
+    const bool resLayer  = HyprlandAPI::addLuaFunction(handle, "myglass", "layer", handleLuaLayer);
+    const bool resConfig = HyprlandAPI::addLuaFunction(handle, "myglass", "config", handleLuaConfig);
+
+    Log::logger->log(Hyprutils::CLI::LOG_TRACE, "[myglass] addLuaFunction('myglass', 'preset') = {}", resPreset);
+    Log::logger->log(Hyprutils::CLI::LOG_TRACE, "[myglass] addLuaFunction('myglass', 'layer')  = {}", resLayer);
+    Log::logger->log(Hyprutils::CLI::LOG_TRACE, "[myglass] addLuaFunction('myglass', 'config') = {}", resConfig);
+
+    HyprlandAPI::addNotificationV2(handle, {
+        {"text", std::format("[myglass] addLuaFunction: preset={}, layer={}, config={}", resPreset, resLayer, resConfig)},
+        {"time", (uint64_t)8000},
+        {"color", CHyprColor{0.2, 0.8, 1.0, 1.0}},
+    });
 }
 
 // ── Config pointer initialization ────────────────────────────────────────────
@@ -385,8 +401,9 @@ void commitPendingPresets() {
 }
 
 // ── Lua config handler ──────────────────────────────────────────────────────
-// hyprglass.config({ key = val, ... }) wraps hl.config({ plugin = { hyprglass = { ... } } })
-// Recursively walks the table and sets each leaf as "plugin.hyprglass.key.subkey"
+// ── Lua config handler ──────────────────────────────────────────────────────
+// myglass.config({ key = val, ... }) wraps hl.config({ plugin = { myglass = { ... } } })
+// Recursively walks the table and sets each leaf as "plugin.myglass.key.subkey"
 
 static void walkConfigTable(lua_State* L, int tableIdx, const std::string& prefix) {
     lua_pushnil(L);
@@ -398,7 +415,7 @@ static void walkConfigTable(lua_State* L, int tableIdx, const std::string& prefi
         if (lua_istable(L, -1)) {
             walkConfigTable(L, lua_gettop(L), fullKey + ".");
         } else {
-            // Push: hl.config({ ["plugin.hyprglass.xxx"] = value })
+            // Push: hl.config({ ["plugin.myglass.xxx"] = value })
             lua_getglobal(L, "hl");
             lua_getfield(L, -1, "config");
             lua_newtable(L);
@@ -413,9 +430,9 @@ static void walkConfigTable(lua_State* L, int tableIdx, const std::string& prefi
 
 static int handleLuaConfig(lua_State* L) {
     if (lua_gettop(L) < 1 || !lua_istable(L, 1))
-        return luaL_error(L, "hyprglass.config: expected a table");
+        return luaL_error(L, "myglass.config: expected a table");
 
-    walkConfigTable(L, 1, "plugin.hyprglass.");
+    walkConfigTable(L, 1, "plugin.myglass.");
     return 0;
 }
 
@@ -470,7 +487,7 @@ static int handleLuaPreset(lua_State* L) {
         return 0;
     }
 
-    return luaL_error(L, "hyprglass.preset: expected (string) or (name, table)");
+    return luaL_error(L, "myglass.preset: expected (string) or (name, table)");
 }
 
 // ── Lua layer handler ───────────────────────────────────────────────────────
@@ -486,7 +503,7 @@ static std::vector<SPendingLayer> s_pendingLayers;
 
 static int handleLuaLayer(lua_State* L) {
     if (lua_gettop(L) < 1 || !lua_isstring(L, 1))
-        return luaL_error(L, "hyprglass.layer: first argument must be a namespace string");
+        return luaL_error(L, "myglass.layer: first argument must be a namespace string");
 
     SPendingLayer entry;
     entry.ns = lua_tostring(L, 1);
@@ -540,7 +557,7 @@ void validateConfig() {
     const auto theme = readStringConfig(config.defaultTheme);
     if (theme != "dark" && theme != "light") {
         HyprlandAPI::addNotificationV2(PHANDLE, {
-            {"text", std::string("[hyprglass] Invalid default_theme '") + std::string(theme) + "', expected 'dark' or 'light'. Falling back to 'dark'."},
+            {"text", std::string("[myglass] Invalid default_theme '") + std::string(theme) + "', expected 'dark' or 'light'. Falling back to 'dark'."},
             {"time", (uint64_t)5000},
             {"color", CHyprColor{1.0, 0.8, 0.2, 1.0}},
         });
@@ -551,7 +568,7 @@ void validateConfig() {
         const auto& presets = g_pGlobalState->customPresets;
         if (presets.find(std::string(preset)) == presets.end()) {
             HyprlandAPI::addNotificationV2(PHANDLE, {
-                {"text", std::string("[hyprglass] Unknown default_preset '") + std::string(preset) + "'. Using 'default' resolution chain."},
+                {"text", std::string("[myglass] Unknown default_preset '") + std::string(preset) + "'. Using 'default' resolution chain."},
                 {"time", (uint64_t)5000},
                 {"color", CHyprColor{1.0, 0.8, 0.2, 1.0}},
             });
