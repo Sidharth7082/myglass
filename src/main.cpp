@@ -154,6 +154,7 @@ static void hkRenderLayer(Render::IHyprRenderer* thisptr, PHLLS layerSurface, PH
     if (!popups && config.layersEnabled && **config.layersEnabled && shouldGlassLayer(layerSurface)) {
         CPerformanceManager::instance().recordLayerRendered(1);
         CPerformanceManager::instance().recordDamageRegion(1);
+        CPerformanceManager::instance().recordDamageAnalysis(g_pHyprRenderer->m_renderData.damage, monitor->m_transformedSize);
 
         // Lazy-create per-layer state, replacing stale entries whose weak ref died
         // (can happen when a new CLayerSurface is allocated at the same address)

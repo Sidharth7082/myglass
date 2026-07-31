@@ -182,6 +182,7 @@ PHLWINDOW CGlassDecoration::getOwner() {
 void CGlassDecoration::renderPass(PHLMONITOR monitor, const float& alpha) {
     CPerformanceManager::instance().recordWindowRendered(1);
     CPerformanceManager::instance().recordDamageRegion(1);
+    CPerformanceManager::instance().recordDamageAnalysis(g_pHyprRenderer->m_renderData.damage, monitor->m_transformedSize);
 
     auto& shaderManager = g_pGlobalState->shaderManager;
     shaderManager.initializeIfNeeded();

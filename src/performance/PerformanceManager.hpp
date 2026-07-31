@@ -5,6 +5,8 @@
 #include "PerformanceMetrics.hpp"
 
 #include <chrono>
+#include <hyprutils/math/Region.hpp>
+#include <hyprutils/math/Vector2D.hpp>
 
 class CPerformanceManager {
 public:
@@ -57,6 +59,9 @@ public:
     inline void recordHeapAllocation(uint32_t count = 1) noexcept {
         if (m_telemetryEnabled) m_metrics.heapAllocations += count;
     }
+
+    // Phase 3.1: Damage analysis telemetry collection
+    void recordDamageAnalysis(const Hyprutils::Math::CRegion& damageRegion, Hyprutils::Math::Vector2D monitorSize) noexcept;
 
     // Memory metric tracking (VRAM allocation estimates)
     inline void recordFramebufferAllocation(size_t bytes) noexcept {

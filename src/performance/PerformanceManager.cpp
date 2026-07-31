@@ -6,6 +6,7 @@
 #include <format>
 #include <fstream>
 #include <unistd.h>
+#include <algorithm>
 #include <hyprland/src/plugins/PluginAPI.hpp>
 #include <hyprland/src/helpers/Color.hpp>
 
@@ -58,6 +59,47 @@ void CPerformanceManager::resetFrameCounters() noexcept {
     m_metrics.resetFrameCounters();
 }
 
+void CPerformanceManager::recordDamageAnalysis(const Hyprutils::Math::CRegion& damageRegion, Hyprutils::Math::Vector2D monitorSize) noexcept {
+    if (!m_telemetryEnabled)
+        return;
+
+    const auto rects = damageRegion.getRects();
+    m_metrics.damageRectCount += static_cast<uint32_t>(rects.size());
+
+    size_t totalArea = 0;
+    size_t maxArea   = 0;
+    int unionX1 = 10000000, unionY1 = 10000000, unionX2 = -10000000, unionY2 = -10000000;
+
+    for (const auto& box : rects) {
+        int w = box.x2 - box.x1;
+        int h = box.y2 - box.y1;
+        if (w > 0 && h > 0) {
+            size_t area = static_cast<size_t>(w) * static_cast<size_t>(h);
+            totalArea += area;
+            if (area > maxArea) maxArea = area;
+
+            if (box.x1 < unionX1) unionX1 = box.x1;
+            if (box.y1 < unionY1) unionY1 = box.y1;
+            if (box.x2 > unionX2) unionX2 = box.x2;
+            if (box.y2 > unionY2) unionY2 = box.y2;
+        }
+    }
+
+    m_metrics.totalDamagedPixelArea += totalArea;
+    if (maxArea > m_metrics.maxDamageRectArea)
+        m_metrics.maxDamageRectArea = maxArea;
+
+    if (unionX2 > unionX1 && unionY2 > unionY1) {
+        size_t unionArea = static_cast<size_t>(unionX2 - unionX1) * static_cast<size_t>(unionY2 - unionY1);
+        m_metrics.boundingUnionArea += unionArea;
+    }
+
+    double monitorArea = monitorSize.x * monitorSize.y;
+    if (monitorArea > 0.0) {
+        m_metrics.damagedMonitorPct = static_cast<float>((static_cast<double>(totalArea) / monitorArea) * 100.0);
+    }
+}
+
 void CPerformanceManager::updateRamUsage() noexcept {
     // Read Resident Set Size (RSS estimate in bytes) from /proc/self/statm on Linux
     std::ifstream statm("/proc/self/statm");
@@ -89,10 +131,13 @@ void CPerformanceManager::logBenchmarkReport() {
         "CPU Frame: {:.2f} ms | GPU Frame: {:.2f} ms | Draw Calls: {} | Blur Passes: {}\n"
         "FBO Binds: {} | FBO Allocs: {} | Shader Binds: {} | Texture Uploads: {}\n"
         "Uniform Uploads: {} | Windows: {} | Layers: {} | Damage Regions: {}\n"
+        "Damage Rects: {} | Damaged Pixels: {} | Max Rect: {} px | Union Area: {} px | Damaged Mon: {:.1f}%\n"
         "VRAM (FBO est.): {:.1f} MB | RAM (RSS est.): {:.1f} MB | Heap Allocs: {}",
         m_metrics.cpuFrameTimeMs, m_metrics.gpuFrameTimeMs, m_metrics.drawCalls, m_metrics.blurPasses,
         m_metrics.framebufferBinds, m_metrics.framebufferAllocations, m_metrics.shaderBinds, m_metrics.textureUploads,
         m_metrics.uniformUploads, m_metrics.windowsRendered, m_metrics.layersRendered, m_metrics.damageRegions,
+        m_metrics.damageRectCount, m_metrics.totalDamagedPixelArea, m_metrics.maxDamageRectArea,
+        m_metrics.boundingUnionArea, m_metrics.damagedMonitorPct,
         vramMb, ramMb, m_metrics.heapAllocations
     );
 

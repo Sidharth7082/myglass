@@ -20,6 +20,13 @@ struct PerformanceMetrics {
     uint32_t layersRendered         = 0;
     uint32_t damageRegions          = 0;
 
+    // Damage telemetry metrics (Phase 3.1)
+    uint32_t damageRectCount       = 0;
+    size_t   totalDamagedPixelArea = 0;
+    size_t   maxDamageRectArea     = 0;
+    size_t   boundingUnionArea     = 0;
+    float    damagedMonitorPct     = 0.0f;
+
     // Memory metrics
     size_t ramBytes  = 0;
     size_t vramBytes = 0;
@@ -40,6 +47,11 @@ struct PerformanceMetrics {
         windowsRendered        = 0;
         layersRendered         = 0;
         damageRegions          = 0;
+        damageRectCount        = 0;
+        totalDamagedPixelArea  = 0;
+        maxDamageRectArea      = 0;
+        boundingUnionArea      = 0;
+        damagedMonitorPct      = 0.0f;
         heapAllocations        = 0;
     }
 };
