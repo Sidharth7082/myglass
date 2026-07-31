@@ -4,17 +4,50 @@
 
 ---
 
-## 🎯 Success Criteria for v1.2.0
+## 🏁 Phase Exit Criteria
 
-- ✅ **Zero Heap Allocations**: 0 heap allocations (`new`, `delete`, `vector` allocations, `std::string` creation) during active frame render loops.
-- ✅ **Damage-Driven Blurring**: Only blur damaged FBO regions instead of full window geometries.
-- ✅ **Blur Texture Caching**: Reuse previous blur textures on static desktops when scene generation hasn't changed.
-- ✅ **Minimal OpenGL State Shifts**: Eliminate redundant FBO, shader, texture binds, and `glUniform` uploads.
-- ✅ **Integrated Telemetry & Debug Overlay**: Real-time performance stats in debug builds.
+A phase is marked **complete** only when its exit criteria are verified by telemetry measurements under the benchmark protocol.
+
+| Phase | Exit Criteria |
+|---|---|
+| **Phase 1: Telemetry & Overlay** | Overlay reports real-time CPU/GPU frame time, draw calls, FBO counts, VRAM, allocations/frame, and blur passes with **< 1% CPU overhead**. |
+| **Phase 2: Zero-Allocation Frame Loop** | **0 heap allocations** (`new`, `delete`, `malloc`, vector resizing, string creation) during active steady-state render loops. |
+| **Phase 3: Damage Pipeline** | Blur passes execute **strictly on damaged bounding regions**; unchanged regions perform zero blur work. |
+| **Phase 4: Blur Cache** | Static desktop reuses cached blur textures with 100% correct invalidation when window position/content changes. |
+| **Phase 5: Framebuffer Manager** | **0 FBO creations/destructions** during steady-state rendering; idle buffers are reclaimed after timeout without memory leaks. |
+| **Phase 6: GPU State Optimization** | Redundant shader binds, FBO binds, texture unit binds, and `glUniform*` uploads reduced to near zero. |
 
 ---
 
-## 🏗️ Phased Development Roadmap
+## 🧪 Standardized Benchmark Scene Protocol
+
+To ensure reproducible metrics across commits, all benchmarks are executed against a standardized test workload:
+
+- **Environment**: 3 Monitor setups (or simulated multi-output viewports), Waybar, SwayNC, Quickshell.
+- **Window Load**: 25 transparent windows across tiled and floating layouts.
+- **Workload Test Phases**:
+  1. **Idle Test (60s)**: Completely static desktop with zero user input.
+  2. **Movement Test (60s)**: Continuous window dragging across monitors.
+  3. **Resize Stress Test (60s)**: Rapid window resizing and workspace switching.
+
+---
+
+## 📊 Phase-by-Phase Benchmark Tracking
+
+Every phase's results will be recorded in this comparison table as implementation progresses:
+
+| Metric | v1.1.0 Baseline | Phase 1 | Phase 2 | Phase 3 | Phase 4 | Phase 5 | Phase 6 | Target Goal |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| **CPU Frame Time** | 6.0 ms | | | | | | | **< 4.5 ms** |
+| **GPU Frame Time** | 5.2 ms | | | | | | | **< 3.5 ms** |
+| **RAM Usage** | 70 MB | | | | | | | **< 50 MB** |
+| **VRAM Usage** | 120 MB | | | | | | | **< 90 MB** |
+| **Blur Passes** | 100% | | | | | | | **Damage Only** |
+| **Allocations / Frame** | ~47 | | | | | | | **0** |
+
+---
+
+## 🏗️ Phased Architecture Roadmap
 
 ```mermaid
 graph TD
@@ -25,83 +58,21 @@ graph TD
     P5 --> P6[Phase 6: GPU State & Uniform Optimization]
 ```
 
----
+### Phase 1 — Benchmark First & Telemetry Overlay
+- Add CPU/GPU timer queries, allocation hooks, and optional HUD overlay (`#ifdef DEBUG_OVERLAY`).
+- Track CPU frame time, GPU render time, draw calls, FBO counts, VRAM, and blur passes.
 
-### Phase 1 — Benchmark First & Telemetry Overlay ⭐⭐⭐⭐⭐
-- **Objective**: Establish empirical baseline measurements before making performance modifications.
-- **Metrics Tracked**:
-  - CPU frame time & GPU render pass time
-  - Number of blur passes executed
-  - Active FBO and texture allocations
-  - VRAM & RAM usage
-  - Total OpenGL draw calls
-  - Number of windows & layer surfaces processed
-  - Number of damaged regions
-- **Developer Debug Overlay**: Optional debug overlay rendering live stats:
-  ```text
-  MyGlass Debug
-  FPS: 165 | CPU: 4.2 ms | GPU: 2.8 ms
-  Blur passes: 12 | Draw calls: 38
-  FBOs: 4 | VRAM: 84 MB | Damage: 3 regions
-  ```
+### Phase 2 — Zero Allocation Frame Loop
+- Replace per-frame allocations (`std::vector` resize, `std::string` formatting, map lookups) with fixed inline buffers and pre-allocated storage.
 
----
+### Phase 3 — Damage Pipeline Rewrite
+- Bounding-box scissor cropping for background sampling and Gaussian blur passes.
 
-### Phase 2 — Zero Allocation Frame Loop ⭐⭐⭐⭐⭐
-- **Objective**: Guarantee zero heap allocations during normal frame rendering loops.
-- **Action Items**:
-  - Eliminate `new` / `delete` per frame.
-  - Eliminate `std::vector::reserve` / `resize` inside `renderLayer` and `applyGlassEffect`.
-  - Replace `std::unordered_map` insertions with fixed-size inline arrays or pre-allocated lookups.
-  - Eliminate `std::string` / `std::format` string construction in rendering codepaths.
+### Phase 4 — Blur Texture Cache
+- Cache blurred textures per window/layer surface; invalidate on scene generation bump or transform updates.
 
----
+### Phase 5 — Framebuffer Manager
+- Manage pool of `SP<Render::IFramebuffer>` with dimension matchers and idle eviction.
 
-### Phase 3 — Damage Pipeline Rewrite ⭐⭐⭐⭐⭐
-- **Objective**: Rewrite the render pipeline to calculate exact damage regions before executing blur passes.
-- **Flow**:
-  1. Receive compositor damage clip rects.
-  2. Crop background sampling to damaged bounding boxes.
-  3. Run two-pass Gaussian blur on damaged regions only.
-  4. Composite updated glass quad to target framebuffer.
-- **Expected Gain**: **20–50% GPU load reduction**.
-
----
-
-### Phase 4 — Blur Texture Cache ⭐⭐⭐⭐⭐
-- **Objective**: Retain previously computed blur textures for static windows and layer surfaces.
-- **Invalidation Triggers**:
-  - Window position or size changes.
-  - Scene generation counter incremented (underlying desktop contents moved/updated).
-  - Config / preset change.
-
----
-
-### Phase 5 — Framebuffer Manager ⭐⭐⭐⭐⭐
-- **Objective**: Lightweight FBO manager to eliminate reallocation overhead.
-- **Features**:
-  - Reuses existing allocated FBOs matching width, height, and DRM format.
-  - Grows pool capacity on demand.
-  - Frees idle FBO resources after a configurable timeout.
-
----
-
-### Phase 6 — GPU State & Uniform Upload Optimization ⭐⭐⭐⭐⭐
-- **Objective**: Reduce OpenGL state changes and redundant driver invocations.
-- **Action Items**:
-  - Track active shader and texture bindings to avoid re-binding already bound assets.
-  - Cache uniform values to prevent redundant `glUniform*` uploads when presets remain unchanged (`Dirty Presets`).
-  - Batch render passes by active preset to minimize state shifts.
-
----
-
-## 📊 Performance Benchmarks & Targets
-
-| Metric | v1.1.0 Baseline | v1.2.0 Target |
-|---|---:|---:|
-| **FPS** | 165 | **165+** |
-| **Frame Time** | ~6.0 ms | **4.0–5.0 ms** |
-| **VRAM Usage** | ~120 MB | **< 90 MB** |
-| **RAM Usage** | ~70 MB | **< 50 MB** |
-| **GPU Usage** | 100% | **60–75%** |
-| **Blur Passes** | Every Frame | **Only Damaged** |
+### Phase 6 — GPU State & Uniform Upload Optimization
+- Track active GL state and uniform values to eliminate redundant state shifts.
