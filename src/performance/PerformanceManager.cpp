@@ -7,8 +7,10 @@
 #include <fstream>
 #include <unistd.h>
 #include <algorithm>
+#include <vector>
 #include <hyprland/src/plugins/PluginAPI.hpp>
 #include <hyprland/src/helpers/Color.hpp>
+#include <hyprland/src/render/OpenGL.hpp>
 
 CPerformanceManager::CPerformanceManager() {
     m_lastLogTime = std::chrono::steady_clock::now();
@@ -21,6 +23,11 @@ CPerformanceManager::CPerformanceManager() {
     const char* logEnv = std::getenv("MYGLASS_ENABLE_TELEMETRY_LOG");
     if (logEnv && *logEnv && std::string_view{logEnv} != "0") {
         m_loggingEnabled = true;
+    }
+
+    const char* overlayEnv = std::getenv("MYGLASS_DEBUG_DAMAGE_OVERLAY");
+    if (overlayEnv && *overlayEnv && std::string_view{overlayEnv} != "0") {
+        m_debugOverlayEnabled = true;
     }
 }
 
@@ -48,6 +55,20 @@ void CPerformanceManager::endFrame() {
 
     m_metrics.cpuFrameTimeMs = m_cpuTimer.elapsedMs();
     m_metrics.gpuFrameTimeMs = m_gpuTimer.lastGpuTimeMs();
+
+    // Store frame sample into ring buffer for percentile analysis
+    FrameSample sample{
+        m_metrics.cpuFrameTimeMs,
+        m_metrics.gpuFrameTimeMs,
+        m_metrics.damageRectCount,
+        m_metrics.totalDamagedPixelArea,
+        m_metrics.unionEfficiency
+    };
+    m_sampleHistory[m_sampleIndex] = sample;
+    m_sampleIndex = (m_sampleIndex + 1) % SAMPLE_HISTORY_SIZE;
+    if (m_sampleCount < SAMPLE_HISTORY_SIZE) {
+        m_sampleCount++;
+    }
 
     updateRamUsage();
     logBenchmarkReport();
@@ -104,6 +125,24 @@ void CPerformanceManager::recordDamageAnalysis(const Hyprutils::Math::CRegion& d
     }
 }
 
+void CPerformanceManager::renderDamageOverlay(const Hyprutils::Math::CRegion& damageRegion) noexcept {
+    if (!m_debugOverlayEnabled || damageRegion.empty() || !g_pHyprOpenGL)
+        return;
+
+    for (const auto& box : damageRegion.getRects()) {
+        CBox rectBox{
+            static_cast<double>(box.x1),
+            static_cast<double>(box.y1),
+            static_cast<double>(box.x2 - box.x1),
+            static_cast<double>(box.y2 - box.y1)
+        };
+        if (rectBox.width > 0.0 && rectBox.height > 0.0) {
+            Render::GL::CHyprOpenGLImpl::SRectRenderData data;
+            g_pHyprOpenGL->renderRect(rectBox, CHyprColor{1.0, 0.2, 0.2, 0.25}, data);
+        }
+    }
+}
+
 void CPerformanceManager::updateRamUsage() noexcept {
     // Read Resident Set Size (RSS estimate in bytes) from /proc/self/statm on Linux
     std::ifstream statm("/proc/self/statm");
@@ -128,18 +167,40 @@ void CPerformanceManager::logBenchmarkReport() {
 
     m_lastLogTime = now;
 
+    // Calculate P95 (95th percentile) CPU & GPU latencies over history buffer
+    double cpuP95 = m_metrics.cpuFrameTimeMs;
+    double gpuP95 = m_metrics.gpuFrameTimeMs;
+    if (m_sampleCount > 0) {
+        std::vector<double> cpuSamples;
+        std::vector<double> gpuSamples;
+        cpuSamples.reserve(m_sampleCount);
+        gpuSamples.reserve(m_sampleCount);
+        for (size_t i = 0; i < m_sampleCount; i++) {
+            cpuSamples.push_back(m_sampleHistory[i].cpuMs);
+            gpuSamples.push_back(m_sampleHistory[i].gpuMs);
+        }
+        std::sort(cpuSamples.begin(), cpuSamples.end());
+        std::sort(gpuSamples.begin(), gpuSamples.end());
+        size_t p95Index = static_cast<size_t>(m_sampleCount * 0.95);
+        if (p95Index >= m_sampleCount) p95Index = m_sampleCount - 1;
+        cpuP95 = cpuSamples[p95Index];
+        gpuP95 = gpuSamples[p95Index];
+    }
+
     const double ramMb  = static_cast<double>(m_metrics.ramBytes)  / (1024.0 * 1024.0);
     const double vramMb = static_cast<double>(m_metrics.vramBytes) / (1024.0 * 1024.0);
 
     const std::string report = std::format(
-        "CPU Frame: {:.2f} ms | GPU Frame: {:.2f} ms | Draw Calls: {} | Blur Passes: {}\n"
-        "FBO Binds: {} | FBO Allocs: {} | Shader Binds: {} | Texture Uploads: {}\n"
-        "Uniform Uploads: {} | Windows: {} | Layers: {} | Damage Regions: {}\n"
+        "CPU Frame: {:.2f} ms (P95: {:.2f} ms) | GPU Frame: {:.2f} ms (P95: {:.2f} ms)\n"
+        "Draw Calls: {} | Blur Passes: {} | FBO Binds: {} | FBO Allocs: {}\n"
+        "Shader Binds: {} | Texture Uploads: {} | Uniform Uploads: {}\n"
+        "Windows: {} | Layers: {} | Damage Regions: {}\n"
         "Damage Rects: {} | Damaged Pixels: {} | Max Rect: {} px | Union Area: {} px | Union Eff: {:.2f} | Damaged Mon: {:.1f}%\n"
         "VRAM (FBO est.): {:.1f} MB | RAM (RSS est.): {:.1f} MB | Heap Allocs: {}",
-        m_metrics.cpuFrameTimeMs, m_metrics.gpuFrameTimeMs, m_metrics.drawCalls, m_metrics.blurPasses,
-        m_metrics.framebufferBinds, m_metrics.framebufferAllocations, m_metrics.shaderBinds, m_metrics.textureUploads,
-        m_metrics.uniformUploads, m_metrics.windowsRendered, m_metrics.layersRendered, m_metrics.damageRegions,
+        m_metrics.cpuFrameTimeMs, cpuP95, m_metrics.gpuFrameTimeMs, gpuP95,
+        m_metrics.drawCalls, m_metrics.blurPasses, m_metrics.framebufferBinds, m_metrics.framebufferAllocations,
+        m_metrics.shaderBinds, m_metrics.textureUploads, m_metrics.uniformUploads,
+        m_metrics.windowsRendered, m_metrics.layersRendered, m_metrics.damageRegions,
         m_metrics.damageRectCount, m_metrics.totalDamagedPixelArea, m_metrics.maxDamageRectArea,
         m_metrics.boundingUnionArea, m_metrics.unionEfficiency, m_metrics.damagedMonitorPct,
         vramMb, ramMb, m_metrics.heapAllocations

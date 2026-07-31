@@ -4,9 +4,18 @@
 #include "GpuTimer.hpp"
 #include "PerformanceMetrics.hpp"
 
+#include <array>
 #include <chrono>
 #include <hyprutils/math/Region.hpp>
 #include <hyprutils/math/Vector2D.hpp>
+
+struct FrameSample {
+    double cpuMs = 0.0;
+    double gpuMs = 0.0;
+    uint32_t damageRects = 0;
+    size_t damagedPixels = 0;
+    float unionEff = 0.0f;
+};
 
 class CPerformanceManager {
 public:
@@ -30,6 +39,8 @@ public:
 
     void setLoggingEnabled(bool enabled) noexcept { m_loggingEnabled = enabled; }
     [[nodiscard]] bool isLoggingEnabled() const noexcept { return m_loggingEnabled; }
+
+    [[nodiscard]] bool isDebugOverlayEnabled() const noexcept { return m_debugOverlayEnabled; }
 
     // Instrumentation recording methods with zero-overhead early exit when disabled
     inline void recordDrawCall(uint32_t count = 1) noexcept {
@@ -60,8 +71,9 @@ public:
         if (m_telemetryEnabled) m_metrics.heapAllocations += count;
     }
 
-    // Phase 3.1: Damage analysis telemetry collection
+    // Phase 3.1: Damage analysis telemetry collection & debug overlay
     void recordDamageAnalysis(const Hyprutils::Math::CRegion& damageRegion, Hyprutils::Math::Vector2D monitorSize) noexcept;
+    void renderDamageOverlay(const Hyprutils::Math::CRegion& damageRegion) noexcept;
 
     // Memory metric tracking (VRAM allocation estimates)
     inline void recordFramebufferAllocation(size_t bytes) noexcept {
@@ -97,8 +109,14 @@ private:
     CCpuTimer m_cpuTimer{};
     CGpuTimer m_gpuTimer{};
 
+    static constexpr size_t SAMPLE_HISTORY_SIZE = 120;
+    std::array<FrameSample, SAMPLE_HISTORY_SIZE> m_sampleHistory{};
+    size_t m_sampleIndex = 0;
+    size_t m_sampleCount = 0;
+
     std::chrono::steady_clock::time_point m_lastLogTime{};
     bool m_telemetryEnabled = true;
     bool m_loggingEnabled = false;
+    bool m_debugOverlayEnabled = false;
     bool m_frameActive = false;
 };

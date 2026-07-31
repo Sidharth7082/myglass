@@ -253,6 +253,10 @@ void CGlassDecoration::renderPass(PHLMONITOR monitor, const float& alpha) {
     GlassRenderer::applyGlassEffect(m_sampleFramebuffer, source,
                                      windowBox, transformBox, glassAlpha,
                                      cornerRadius, roundingPower, m_samplePaddingRatio, ctx);
+
+    if (CPerformanceManager::instance().isDebugOverlayEnabled()) {
+        CPerformanceManager::instance().renderDamageOverlay(g_pHyprRenderer->m_renderData.damage);
+    }
 }
 
 eDecorationType CGlassDecoration::getDecorationType() {
