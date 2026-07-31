@@ -4,6 +4,7 @@
 #include "performance/PerformanceManager.hpp"
 
 #include <array>
+#include <utility>
 #include <GLES3/gl32.h>
 #include <hyprland/src/render/OpenGL.hpp>
 #include <hyprland/src/render/Renderer.hpp>
@@ -14,21 +15,65 @@ static GLuint fbId(const SP<Render::IFramebuffer>& framebuffer) {
     return dynamic_cast<Render::GL::CGLFramebuffer*>(framebuffer.get())->getFBID();
 }
 
-static void uploadThemeUniforms(const SResolveContext& ctx) {
-    CPerformanceManager::instance().recordUniformUpload(7);
+// ── Perfect-forwarding Uniform wrappers with automatic telemetry recording ──
 
+static inline void setUniform1f(GLint location, float v0) {
+    glUniform1f(location, v0);
+    CPerformanceManager::instance().recordUniformUpload(1);
+}
+
+static inline void setUniform2f(GLint location, float v0, float v1) {
+    glUniform2f(location, v0, v1);
+    CPerformanceManager::instance().recordUniformUpload(1);
+}
+
+static inline void setUniform3f(GLint location, float v0, float v1, float v2) {
+    glUniform3f(location, v0, v1, v2);
+    CPerformanceManager::instance().recordUniformUpload(1);
+}
+
+static inline void setUniform1i(GLint location, int v0) {
+    glUniform1i(location, v0);
+    CPerformanceManager::instance().recordUniformUpload(1);
+}
+
+template <typename ShaderType, typename NameType, typename... Args>
+static inline auto setShaderUniformFloat(ShaderType&& shader, NameType&& name, Args&&... args) {
+    CPerformanceManager::instance().recordUniformUpload(1);
+    return shader->setUniformFloat(std::forward<NameType>(name), std::forward<Args>(args)...);
+}
+
+template <typename ShaderType, typename NameType, typename... Args>
+static inline auto setShaderUniformFloat2(ShaderType&& shader, NameType&& name, Args&&... args) {
+    CPerformanceManager::instance().recordUniformUpload(1);
+    return shader->setUniformFloat2(std::forward<NameType>(name), std::forward<Args>(args)...);
+}
+
+template <typename ShaderType, typename NameType, typename... Args>
+static inline auto setShaderUniformInt(ShaderType&& shader, NameType&& name, Args&&... args) {
+    CPerformanceManager::instance().recordUniformUpload(1);
+    return shader->setUniformInt(std::forward<NameType>(name), std::forward<Args>(args)...);
+}
+
+template <typename ShaderType, typename NameType, typename... Args>
+static inline auto setShaderUniformMatrix3fv(ShaderType&& shader, NameType&& name, Args&&... args) {
+    CPerformanceManager::instance().recordUniformUpload(1);
+    return shader->setUniformMatrix3fv(std::forward<NameType>(name), std::forward<Args>(args)...);
+}
+
+static void uploadThemeUniforms(const SResolveContext& ctx) {
     const auto& uniforms = g_pGlobalState->shaderManager.glassUniforms;
     const auto& glassShader = g_pGlobalState->shaderManager.glassShader;
     const auto& defaults = ctx.isDark ? DARK_THEME_DEFAULTS : LIGHT_THEME_DEFAULTS;
 
-    glassShader->setUniformFloat(SHADER_BRIGHTNESS, resolvePresetFloat(ctx, &SPresetValues::brightness, &SOverridableConfig::brightness, defaults.brightness));
-    glassShader->setUniformFloat(SHADER_CONTRAST,   resolvePresetFloat(ctx, &SPresetValues::contrast, &SOverridableConfig::contrast, defaults.contrast));
-    glUniform1f(uniforms.saturation,                 resolvePresetFloat(ctx, &SPresetValues::saturation, &SOverridableConfig::saturation, defaults.saturation));
-    glassShader->setUniformFloat(SHADER_VIBRANCY,   resolvePresetFloat(ctx, &SPresetValues::vibrancy, &SOverridableConfig::vibrancy, defaults.vibrancy));
-    glUniform1f(uniforms.vibrancyDarkness,           resolvePresetFloat(ctx, &SPresetValues::vibrancyDarkness, &SOverridableConfig::vibrancyDarkness, defaults.vibrancyDarkness));
+    setShaderUniformFloat(glassShader, SHADER_BRIGHTNESS, resolvePresetFloat(ctx, &SPresetValues::brightness, &SOverridableConfig::brightness, defaults.brightness));
+    setShaderUniformFloat(glassShader, SHADER_CONTRAST,   resolvePresetFloat(ctx, &SPresetValues::contrast, &SOverridableConfig::contrast, defaults.contrast));
+    setUniform1f(uniforms.saturation,                     resolvePresetFloat(ctx, &SPresetValues::saturation, &SOverridableConfig::saturation, defaults.saturation));
+    setShaderUniformFloat(glassShader, SHADER_VIBRANCY,   resolvePresetFloat(ctx, &SPresetValues::vibrancy, &SOverridableConfig::vibrancy, defaults.vibrancy));
+    setUniform1f(uniforms.vibrancyDarkness,               resolvePresetFloat(ctx, &SPresetValues::vibrancyDarkness, &SOverridableConfig::vibrancyDarkness, defaults.vibrancyDarkness));
 
-    glUniform1f(uniforms.adaptiveDim,   resolvePresetFloat(ctx, &SPresetValues::adaptiveDim, &SOverridableConfig::adaptiveDim, defaults.adaptiveDim));
-    glUniform1f(uniforms.adaptiveBoost, resolvePresetFloat(ctx, &SPresetValues::adaptiveBoost, &SOverridableConfig::adaptiveBoost, defaults.adaptiveBoost));
+    setUniform1f(uniforms.adaptiveDim,   resolvePresetFloat(ctx, &SPresetValues::adaptiveDim, &SOverridableConfig::adaptiveDim, defaults.adaptiveDim));
+    setUniform1f(uniforms.adaptiveBoost, resolvePresetFloat(ctx, &SPresetValues::adaptiveBoost, &SOverridableConfig::adaptiveBoost, defaults.adaptiveBoost));
 }
 
 void sampleBackground(SP<Render::IFramebuffer>& sampleFramebuffer, SP<Render::IFramebuffer> sourceFramebuffer,
@@ -39,8 +84,6 @@ void sampleBackground(SP<Render::IFramebuffer>& sampleFramebuffer, SP<Render::IF
     int fullWidth  = static_cast<int>(box.width) + 2 * pad;
     int fullHeight = static_cast<int>(box.height) + 2 * pad;
 
-    // Allocate sample FBO at reduced resolution when blur is strong enough
-    // to hide the lower resolution. Weak blur at half-res shows pixelation.
     int sampleWidth  = std::max(1, fullWidth / downscale);
     int sampleHeight = std::max(1, fullHeight / downscale);
 
@@ -57,14 +100,11 @@ void sampleBackground(SP<Render::IFramebuffer>& sampleFramebuffer, SP<Render::IF
     int srcY0 = static_cast<int>(box.y) - pad;
     int srcY1 = static_cast<int>(box.y + box.height) + pad;
 
-    // Clamp source coordinates to framebuffer bounds to avoid reading black/undefined pixels
     int framebufferWidth  = static_cast<int>(sourceFramebuffer->m_size.x);
     int framebufferHeight = static_cast<int>(sourceFramebuffer->m_size.y);
 
-    // Destination coords in downscaled FBO space
     int dstX0 = 0, dstY0 = 0, dstX1 = sampleWidth, dstY1 = sampleHeight;
 
-    // Scale destination adjustments proportionally for the downscaled FBO
     const float xScale = static_cast<float>(sampleWidth) / fullWidth;
     const float yScale = static_cast<float>(sampleHeight) / fullHeight;
 
@@ -73,19 +113,13 @@ void sampleBackground(SP<Render::IFramebuffer>& sampleFramebuffer, SP<Render::IF
     if (srcX1 > framebufferWidth)  { dstX1 -= static_cast<int>((srcX1 - framebufferWidth) * xScale);  srcX1 = framebufferWidth; }
     if (srcY1 > framebufferHeight) { dstY1 -= static_cast<int>((srcY1 - framebufferHeight) * yScale); srcY1 = framebufferHeight; }
 
-    // Padding ratio is relative to the logical content area (resolution-independent)
     outPaddingRatio = Vector2D(
         static_cast<double>(pad) / fullWidth,
         static_cast<double>(pad) / fullHeight
     );
 
-    // The render pass scissors each element to its damage region.
-    // That scissor state leaks here and clips glBlitFramebuffer on the
-    // DRAW framebuffer, causing partial writes and stale noise artifacts.
     g_pHyprOpenGL->setCapStatus(GL_SCISSOR_TEST, false);
 
-    // Clear the sample FBO before blitting. Clamped regions (near edges)
-    // would otherwise contain uninitialized GPU memory (pink artifacts).
     glBindFramebuffer(GL_FRAMEBUFFER, fbId(sampleFramebuffer));
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     glClear(GL_COLOR_BUFFER_BIT);
@@ -118,7 +152,6 @@ void blurBackground(SP<Render::IFramebuffer> sampleFramebuffer, float radius, in
         CPerformanceManager::instance().recordFramebufferAllocation(width * height * 4);
     }
 
-    // Fullscreen quad projection: maps VAO positions [0,1] to clip space [-1,1]
     static constexpr std::array<float, 9> FULLSCREEN_PROJECTION = {
         2.0f, 0.0f, 0.0f,
         0.0f, 2.0f, 0.0f,
@@ -129,39 +162,31 @@ void blurBackground(SP<Render::IFramebuffer> sampleFramebuffer, float radius, in
 
     auto shader = g_pHyprOpenGL->useShader(shaderManager.blurShader);
     CPerformanceManager::instance().recordShaderBind(1);
-    CPerformanceManager::instance().recordUniformUpload(3);
 
-    shader->setUniformMatrix3fv(SHADER_PROJ, 1, GL_FALSE, FULLSCREEN_PROJECTION);
-    shader->setUniformInt(SHADER_TEX, 0);
-    glUniform1f(blurUniforms.radius, radius);
+    setShaderUniformMatrix3fv(shader, SHADER_PROJ, 1, GL_FALSE, FULLSCREEN_PROJECTION);
+    setShaderUniformInt(shader, SHADER_TEX, 0);
+    setUniform1f(blurUniforms.radius, radius);
+
     glBindVertexArray(shader->getUniformLocation(SHADER_SHADER_VAO));
     g_pHyprOpenGL->setViewport(0, 0, width, height);
     glActiveTexture(GL_TEXTURE0);
 
-    // Ping-pong at full resolution: sampleFramebuffer ↔ blurTempFramebuffer
     for (int iteration = 0; iteration < iterations; iteration++) {
-        // Horizontal pass: sampleFramebuffer → blurTempFramebuffer
         glBindFramebuffer(GL_FRAMEBUFFER, fbId(blurTempFramebuffer));
         sampleFramebuffer->getTexture()->bind();
-        glUniform2f(blurUniforms.direction, 1.0f / width, 0.0f);
+        setUniform2f(blurUniforms.direction, 1.0f / width, 0.0f);
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
-        // Vertical pass: blurTempFramebuffer → sampleFramebuffer
         glBindFramebuffer(GL_FRAMEBUFFER, fbId(sampleFramebuffer));
         blurTempFramebuffer->getTexture()->bind();
-        glUniform2f(blurUniforms.direction, 0.0f, 1.0f / height);
+        setUniform2f(blurUniforms.direction, 0.0f, 1.0f / height);
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
         CPerformanceManager::instance().recordBlurPass(1);
         CPerformanceManager::instance().recordDrawCall(2);
         CPerformanceManager::instance().recordFramebufferBind(2);
-        CPerformanceManager::instance().recordUniformUpload(2);
     }
 
-    // Restore caller's GL state without querying (avoids pipeline stalls).
-    // The viewport must match the re-bound framebuffer's own size: monitor
-    // sizes are wrong here on 90°/270° monitors, where m_transformedSize is
-    // swapped relative to the framebuffer's native orientation (#41).
     glBindFramebuffer(GL_FRAMEBUFFER, fbId(callerFramebuffer));
     CPerformanceManager::instance().recordFramebufferBind(1);
 
@@ -196,9 +221,6 @@ void applyGlassEffect(SP<Render::IFramebuffer> sampleFramebuffer, SP<Render::IFr
     glActiveTexture(GL_TEXTURE0);
     texture->bind();
 
-    // Layers only: bind the temp FBO texture (rendered surface) on texture unit 1.
-    // The shader samples it to mask glass to visible content and composite surface on top.
-    // Windows pass mask=nullptr so this block is skipped.
     if (mask && mask->textureId != 0) {
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(mask->target, mask->textureId);
@@ -208,57 +230,52 @@ void applyGlassEffect(SP<Render::IFramebuffer> sampleFramebuffer, SP<Render::IFr
     auto shader = g_pHyprOpenGL->useShader(shaderManager.glassShader);
     CPerformanceManager::instance().recordShaderBind(1);
 
-    shader->setUniformMatrix3fv(SHADER_PROJ, 1, GL_FALSE, glMatrix.getMatrix());
-    shader->setUniformInt(SHADER_TEX, 0);
+    setShaderUniformMatrix3fv(shader, SHADER_PROJ, 1, GL_FALSE, glMatrix.getMatrix());
+    setShaderUniformInt(shader, SHADER_TEX, 0);
 
     const auto fullSize = Vector2D(transformedBox.width, transformedBox.height);
-    shader->setUniformFloat2(SHADER_FULL_SIZE,
+    setShaderUniformFloat2(shader, SHADER_FULL_SIZE,
         static_cast<float>(fullSize.x), static_cast<float>(fullSize.y));
 
-    glUniform1f(uniforms.refractionStrength,  resolvePresetFloat(resolveContext, &SPresetValues::refractionStrength, &SOverridableConfig::refractionStrength));
-    glUniform1f(uniforms.chromaticAberration, resolvePresetFloat(resolveContext, &SPresetValues::chromaticAberration, &SOverridableConfig::chromaticAberration));
-    glUniform1f(uniforms.fresnelStrength,     resolvePresetFloat(resolveContext, &SPresetValues::fresnelStrength, &SOverridableConfig::fresnelStrength));
-    glUniform1f(uniforms.specularStrength,    resolvePresetFloat(resolveContext, &SPresetValues::specularStrength, &SOverridableConfig::specularStrength));
-    glUniform1f(uniforms.glassOpacity,        resolvePresetFloat(resolveContext, &SPresetValues::glassOpacity, &SOverridableConfig::glassOpacity) * alpha);
-    glUniform1f(uniforms.edgeThickness,       resolvePresetFloat(resolveContext, &SPresetValues::edgeThickness, &SOverridableConfig::edgeThickness));
-    glUniform1f(uniforms.lensDistortion,      resolvePresetFloat(resolveContext, &SPresetValues::lensDistortion, &SOverridableConfig::lensDistortion));
+    setUniform1f(uniforms.refractionStrength,  resolvePresetFloat(resolveContext, &SPresetValues::refractionStrength, &SOverridableConfig::refractionStrength));
+    setUniform1f(uniforms.chromaticAberration, resolvePresetFloat(resolveContext, &SPresetValues::chromaticAberration, &SOverridableConfig::chromaticAberration));
+    setUniform1f(uniforms.fresnelStrength,     resolvePresetFloat(resolveContext, &SPresetValues::fresnelStrength, &SOverridableConfig::fresnelStrength));
+    setUniform1f(uniforms.specularStrength,    resolvePresetFloat(resolveContext, &SPresetValues::specularStrength, &SOverridableConfig::specularStrength));
+    setUniform1f(uniforms.glassOpacity,        resolvePresetFloat(resolveContext, &SPresetValues::glassOpacity, &SOverridableConfig::glassOpacity) * alpha);
+    setUniform1f(uniforms.edgeThickness,       resolvePresetFloat(resolveContext, &SPresetValues::edgeThickness, &SOverridableConfig::edgeThickness));
+    setUniform1f(uniforms.lensDistortion,      resolvePresetFloat(resolveContext, &SPresetValues::lensDistortion, &SOverridableConfig::lensDistortion));
 
     uploadThemeUniforms(resolveContext);
 
     const int64_t tintColorValue = resolvePresetInt(resolveContext, &SPresetValues::tintColor, &SOverridableConfig::tintColor);
-    glUniform3f(uniforms.tintColor,
+    setUniform3f(uniforms.tintColor,
         static_cast<float>((tintColorValue >> 24) & 0xFF) / 255.0f,
         static_cast<float>((tintColorValue >> 16) & 0xFF) / 255.0f,
         static_cast<float>((tintColorValue >> 8) & 0xFF) / 255.0f);
-    glUniform1f(uniforms.tintAlpha,
+    setUniform1f(uniforms.tintAlpha,
         static_cast<float>(tintColorValue & 0xFF) / 255.0f);
 
-    glUniform2f(uniforms.uvPadding,
+    setUniform2f(uniforms.uvPadding,
         static_cast<float>(paddingRatio.x),
         static_cast<float>(paddingRatio.y));
 
-    // Layers only: enable mask and provide UV mapping from the glass quad into
-    // the monitor-sized temp FBO. Windows use useMask=0 (no masking).
     if (mask && mask->textureId != 0) {
-        glUniform1i(uniforms.useMask, 1);
-        glUniform1i(uniforms.maskTex, 1);
-        glUniform2f(uniforms.maskUVOffset,
+        setUniform1i(uniforms.useMask, 1);
+        setUniform1i(uniforms.maskTex, 1);
+        setUniform2f(uniforms.maskUVOffset,
             static_cast<float>(mask->uvOffset.x),
             static_cast<float>(mask->uvOffset.y));
-        glUniform2f(uniforms.maskUVScale,
+        setUniform2f(uniforms.maskUVScale,
             static_cast<float>(mask->uvScale.x),
             static_cast<float>(mask->uvScale.y));
-        glUniform1f(uniforms.maskAlphaThreshold, mask->alphaThreshold);
-        CPerformanceManager::instance().recordUniformUpload(5);
+        setUniform1f(uniforms.maskAlphaThreshold, mask->alphaThreshold);
     } else {
-        glUniform1i(uniforms.useMask, 0);
-        glUniform1f(uniforms.maskAlphaThreshold, 0.001f);
-        CPerformanceManager::instance().recordUniformUpload(2);
+        setUniform1i(uniforms.useMask, 0);
+        setUniform1f(uniforms.maskAlphaThreshold, 0.001f);
     }
 
-    shader->setUniformFloat(SHADER_RADIUS, cornerRadius);
-    shader->setUniformFloat(SHADER_ROUNDING_POWER, roundingPower);
-    CPerformanceManager::instance().recordUniformUpload(13);
+    setShaderUniformFloat(shader, SHADER_RADIUS, cornerRadius);
+    setShaderUniformFloat(shader, SHADER_ROUNDING_POWER, roundingPower);
 
     glBindVertexArray(shader->getUniformLocation(SHADER_SHADER_VAO));
     g_pHyprOpenGL->scissor(rawBox);
@@ -269,4 +286,3 @@ void applyGlassEffect(SP<Render::IFramebuffer> sampleFramebuffer, SP<Render::IFr
 }
 
 } // namespace GlassRenderer
-
