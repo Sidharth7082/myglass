@@ -94,6 +94,10 @@ void CPerformanceManager::recordDamageAnalysis(const Hyprutils::Math::CRegion& d
         m_metrics.boundingUnionArea += unionArea;
     }
 
+    if (m_metrics.boundingUnionArea > 0) {
+        m_metrics.unionEfficiency = static_cast<float>(static_cast<double>(m_metrics.totalDamagedPixelArea) / static_cast<double>(m_metrics.boundingUnionArea));
+    }
+
     double monitorArea = monitorSize.x * monitorSize.y;
     if (monitorArea > 0.0) {
         m_metrics.damagedMonitorPct = static_cast<float>((static_cast<double>(totalArea) / monitorArea) * 100.0);
@@ -131,13 +135,13 @@ void CPerformanceManager::logBenchmarkReport() {
         "CPU Frame: {:.2f} ms | GPU Frame: {:.2f} ms | Draw Calls: {} | Blur Passes: {}\n"
         "FBO Binds: {} | FBO Allocs: {} | Shader Binds: {} | Texture Uploads: {}\n"
         "Uniform Uploads: {} | Windows: {} | Layers: {} | Damage Regions: {}\n"
-        "Damage Rects: {} | Damaged Pixels: {} | Max Rect: {} px | Union Area: {} px | Damaged Mon: {:.1f}%\n"
+        "Damage Rects: {} | Damaged Pixels: {} | Max Rect: {} px | Union Area: {} px | Union Eff: {:.2f} | Damaged Mon: {:.1f}%\n"
         "VRAM (FBO est.): {:.1f} MB | RAM (RSS est.): {:.1f} MB | Heap Allocs: {}",
         m_metrics.cpuFrameTimeMs, m_metrics.gpuFrameTimeMs, m_metrics.drawCalls, m_metrics.blurPasses,
         m_metrics.framebufferBinds, m_metrics.framebufferAllocations, m_metrics.shaderBinds, m_metrics.textureUploads,
         m_metrics.uniformUploads, m_metrics.windowsRendered, m_metrics.layersRendered, m_metrics.damageRegions,
         m_metrics.damageRectCount, m_metrics.totalDamagedPixelArea, m_metrics.maxDamageRectArea,
-        m_metrics.boundingUnionArea, m_metrics.damagedMonitorPct,
+        m_metrics.boundingUnionArea, m_metrics.unionEfficiency, m_metrics.damagedMonitorPct,
         vramMb, ramMb, m_metrics.heapAllocations
     );
 

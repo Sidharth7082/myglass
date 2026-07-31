@@ -126,7 +126,7 @@ graph TD
 
 | Sub-Phase | Focus | Functional / Correctness Exit Criteria | Performance Validation Criteria |
 |---|---|---|---|
-| ✅ **3.1** | **Damage Collection & Telemetry** | Damage regions match compositor; **0 rendering changes**. | Telemetry records damage counts, pixel area, and union bounds correctly. |
+| ⏳ **3.1** | **Damage Collection & Telemetry** | Implementation Complete (Verification Pending: damage regions match compositor; 0 rendering changes). | Telemetry records damage counts, pixel area, union area & union efficiency. |
 | **3.2** | **Scissor Scaffolding & State** | 100% pixel-identical output vs baseline (0 seams/artifacts). | Zero measurable CPU/GPU render regression. |
 | **3.3** | **Scissored Background Sampling** | Background sampling (`glBlitFramebuffer`) restricted to damage. | Reduced blit pixel fill workload. |
 | **3.4** | **Scissored Gaussian Blur & Padding** | Ping-pong blur passes restricted to padded damage boxes. | Reduced blur pass pixel fill workload. |

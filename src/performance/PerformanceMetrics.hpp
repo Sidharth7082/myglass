@@ -26,6 +26,7 @@ struct PerformanceMetrics {
     size_t   maxDamageRectArea     = 0;
     size_t   boundingUnionArea     = 0;
     float    damagedMonitorPct     = 0.0f;
+    float    unionEfficiency       = 0.0f;
 
     // Memory metrics
     size_t ramBytes  = 0;
@@ -52,6 +53,7 @@ struct PerformanceMetrics {
         maxDamageRectArea      = 0;
         boundingUnionArea      = 0;
         damagedMonitorPct      = 0.0f;
+        unionEfficiency        = 0.0f;
         heapAllocations        = 0;
     }
 };
