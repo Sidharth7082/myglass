@@ -81,14 +81,14 @@ To ensure reproducible metrics across commits, all benchmarks are executed again
 
 ## 📊 Phase-by-Phase Benchmark Tracking
 
-| Metric | v1.1.0 Baseline | Phase 1 | Phase 2 (Impl.) | Phase 3 | Phase 4 | Phase 5 | Phase 6 | Target Goal |
+| Metric | v1.1.0 Baseline | Phase 1 | Phase 2 | Phase 3 | Phase 4 | Phase 5 | Phase 6 | Target Goal |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
-| **CPU Frame Time** | 6.0 ms | 4.2 ms | ~4.0 ms | | | | | **< 4.5 ms** |
-| **GPU Frame Time** | 5.2 ms | 2.8 ms | ~2.8 ms | | | | | **< 3.5 ms** |
-| **RAM (RSS est.)** | 70 MB | 46 MB | 46 MB | | | | | **< 50 MB** |
-| **VRAM (FBO est.)** | 120 MB | 84 MB | 84 MB | | | | | **< 90 MB** |
-| **Blur Passes** | Full FBO | Full FBO | Full FBO | | | | | **Damage Only** |
-| **Allocations / Frame** | ~47 | ~4 | 0 (pending telem verify) | | | | | **0** |
+| **CPU Frame Time** | 6.0 ms | 4.2 ms | Pending | | | | | **< 4.5 ms** |
+| **GPU Frame Time** | 5.2 ms | 2.8 ms | Pending | | | | | **< 3.5 ms** |
+| **RAM (RSS est.)** | 70 MB | 46 MB | Pending | | | | | **< 50 MB** |
+| **VRAM (FBO est.)** | 120 MB | 84 MB | Pending | | | | | **< 90 MB** |
+| **Blur Passes** | Full FBO | Full FBO | Pending | | | | | **Damage Only** |
+| **Allocations / Frame** | ~47 | ~4 | Pending | | | | | **0** |
 
 ---
 
@@ -118,7 +118,8 @@ graph TD
 ### Phase 2 — Zero-Allocation Frame Loop (Implementation Complete)
 - Eliminated per-frame `std::string` allocations and dynamic tag constructions using static string constants and `std::string_view` slices.
 
-### Phase 3 — Damage Pipeline Rewrite (Next)
+### Phase 3 — Damage Pipeline Rewrite (Architecture Designed 🚧)
+- Detailed architectural specification created in [`docs/phase-3-damage-pipeline-architecture.md`](file:///home/capture/Downloads/myglass/docs/phase-3-damage-pipeline-architecture.md).
 - Scissor/box bounding-region cropping for background sampling and Gaussian blur passes so only damaged pixels are re-processed.
 
 ### Phase 4 — Blur Texture Cache
