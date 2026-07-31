@@ -22,43 +22,64 @@ public:
 
     [[nodiscard]] const PerformanceMetrics& getMetrics() const noexcept { return m_metrics; }
 
-    // Instrumentation recording methods
-    void recordDrawCall(uint32_t count = 1) noexcept { m_metrics.drawCalls += count; }
-    void recordBlurPass(uint32_t count = 1) noexcept { m_metrics.blurPasses += count; }
-    void recordFramebufferBind(uint32_t count = 1) noexcept { m_metrics.framebufferBinds += count; }
-    void recordShaderBind(uint32_t count = 1) noexcept { m_metrics.shaderBinds += count; }
-    void recordUniformUpload(uint32_t count = 1) noexcept { m_metrics.uniformUploads += count; }
-    void recordWindowRendered(uint32_t count = 1) noexcept { m_metrics.windowsRendered += count; }
-    void recordLayerRendered(uint32_t count = 1) noexcept { m_metrics.layersRendered += count; }
-    void recordDamageRegion(uint32_t count = 1) noexcept { m_metrics.damageRegions += count; }
-    void recordHeapAllocation(uint32_t count = 1) noexcept { m_metrics.heapAllocations += count; }
+    // Telemetry enable/disable control
+    void setTelemetryEnabled(bool enabled) noexcept { m_telemetryEnabled = enabled; }
+    [[nodiscard]] bool isTelemetryEnabled() const noexcept { return m_telemetryEnabled; }
 
-    void recordFramebufferAllocation(size_t bytes) noexcept {
+    void setLoggingEnabled(bool enabled) noexcept { m_loggingEnabled = enabled; }
+    [[nodiscard]] bool isLoggingEnabled() const noexcept { return m_loggingEnabled; }
+
+    // Instrumentation recording methods with zero-overhead early exit when disabled
+    inline void recordDrawCall(uint32_t count = 1) noexcept {
+        if (m_telemetryEnabled) m_metrics.drawCalls += count;
+    }
+    inline void recordBlurPass(uint32_t count = 1) noexcept {
+        if (m_telemetryEnabled) m_metrics.blurPasses += count;
+    }
+    inline void recordFramebufferBind(uint32_t count = 1) noexcept {
+        if (m_telemetryEnabled) m_metrics.framebufferBinds += count;
+    }
+    inline void recordShaderBind(uint32_t count = 1) noexcept {
+        if (m_telemetryEnabled) m_metrics.shaderBinds += count;
+    }
+    inline void recordUniformUpload(uint32_t count = 1) noexcept {
+        if (m_telemetryEnabled) m_metrics.uniformUploads += count;
+    }
+    inline void recordWindowRendered(uint32_t count = 1) noexcept {
+        if (m_telemetryEnabled) m_metrics.windowsRendered += count;
+    }
+    inline void recordLayerRendered(uint32_t count = 1) noexcept {
+        if (m_telemetryEnabled) m_metrics.layersRendered += count;
+    }
+    inline void recordDamageRegion(uint32_t count = 1) noexcept {
+        if (m_telemetryEnabled) m_metrics.damageRegions += count;
+    }
+    inline void recordHeapAllocation(uint32_t count = 1) noexcept {
+        if (m_telemetryEnabled) m_metrics.heapAllocations += count;
+    }
+
+    // Memory metric tracking (VRAM allocation estimates)
+    inline void recordFramebufferAllocation(size_t bytes) noexcept {
+        if (!m_telemetryEnabled) return;
         m_metrics.framebufferAllocations++;
         m_metrics.vramBytes += bytes;
     }
 
-    void recordFramebufferDeallocation(size_t bytes) noexcept {
-        if (m_metrics.vramBytes >= bytes)
-            m_metrics.vramBytes -= bytes;
-        else
-            m_metrics.vramBytes = 0;
+    inline void recordFramebufferDeallocation(size_t bytes) noexcept {
+        if (!m_telemetryEnabled) return;
+        m_metrics.vramBytes = (m_metrics.vramBytes >= bytes) ? (m_metrics.vramBytes - bytes) : 0;
     }
 
-    void recordTextureUpload(size_t bytes) noexcept {
+    inline void recordTextureUpload(size_t bytes) noexcept {
+        if (!m_telemetryEnabled) return;
         m_metrics.textureUploads++;
         m_metrics.vramBytes += bytes;
     }
 
-    void recordTextureDestruction(size_t bytes) noexcept {
-        if (m_metrics.vramBytes >= bytes)
-            m_metrics.vramBytes -= bytes;
-        else
-            m_metrics.vramBytes = 0;
+    inline void recordTextureDestruction(size_t bytes) noexcept {
+        if (!m_telemetryEnabled) return;
+        m_metrics.vramBytes = (m_metrics.vramBytes >= bytes) ? (m_metrics.vramBytes - bytes) : 0;
     }
-
-    void setLoggingEnabled(bool enabled) noexcept { m_loggingEnabled = enabled; }
-    [[nodiscard]] bool isLoggingEnabled() const noexcept { return m_loggingEnabled; }
 
 private:
     CPerformanceManager();
@@ -72,6 +93,7 @@ private:
     CGpuTimer m_gpuTimer{};
 
     std::chrono::steady_clock::time_point m_lastLogTime{};
+    bool m_telemetryEnabled = true;
     bool m_loggingEnabled = false;
     bool m_frameActive = false;
 };

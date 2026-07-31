@@ -12,6 +12,11 @@
 CPerformanceManager::CPerformanceManager() {
     m_lastLogTime = std::chrono::steady_clock::now();
 
+    const char* telemEnv = std::getenv("MYGLASS_ENABLE_TELEMETRY");
+    if (telemEnv && *telemEnv && std::string_view{telemEnv} == "0") {
+        m_telemetryEnabled = false;
+    }
+
     const char* logEnv = std::getenv("MYGLASS_ENABLE_TELEMETRY_LOG");
     if (logEnv && *logEnv && std::string_view{logEnv} != "0") {
         m_loggingEnabled = true;
@@ -19,7 +24,7 @@ CPerformanceManager::CPerformanceManager() {
 }
 
 void CPerformanceManager::beginFrame() {
-    if (m_frameActive)
+    if (!m_telemetryEnabled || m_frameActive)
         return;
 
     m_metrics.resetFrameCounters();
@@ -34,7 +39,7 @@ void CPerformanceManager::beginFrame() {
 }
 
 void CPerformanceManager::endFrame() {
-    if (!m_frameActive)
+    if (!m_telemetryEnabled || !m_frameActive)
         return;
 
     m_gpuTimer.endFrame();
@@ -54,7 +59,7 @@ void CPerformanceManager::resetFrameCounters() noexcept {
 }
 
 void CPerformanceManager::updateRamUsage() noexcept {
-    // Read resident set size (RSS) from /proc/self/statm on Linux
+    // Read Resident Set Size (RSS estimate in bytes) from /proc/self/statm on Linux
     std::ifstream statm("/proc/self/statm");
     if (statm.is_open()) {
         size_t totalPages = 0, rssPages = 0;
@@ -84,7 +89,7 @@ void CPerformanceManager::logBenchmarkReport() {
         "CPU Frame: {:.2f} ms | GPU Frame: {:.2f} ms | Draw Calls: {} | Blur Passes: {}\n"
         "FBO Binds: {} | FBO Allocs: {} | Shader Binds: {} | Texture Uploads: {}\n"
         "Uniform Uploads: {} | Windows: {} | Layers: {} | Damage Regions: {}\n"
-        "VRAM: {:.1f} MB | RAM: {:.1f} MB | Heap Allocs: {}",
+        "VRAM (FBO est.): {:.1f} MB | RAM (RSS est.): {:.1f} MB | Heap Allocs: {}",
         m_metrics.cpuFrameTimeMs, m_metrics.gpuFrameTimeMs, m_metrics.drawCalls, m_metrics.blurPasses,
         m_metrics.framebufferBinds, m_metrics.framebufferAllocations, m_metrics.shaderBinds, m_metrics.textureUploads,
         m_metrics.uniformUploads, m_metrics.windowsRendered, m_metrics.layersRendered, m_metrics.damageRegions,

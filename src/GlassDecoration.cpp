@@ -175,35 +175,26 @@ PHLWINDOW CGlassDecoration::getOwner() {
 }
 
 void CGlassDecoration::renderPass(PHLMONITOR monitor, const float& alpha) {
-    CPerformanceManager::instance().beginFrame();
     CPerformanceManager::instance().recordWindowRendered(1);
     CPerformanceManager::instance().recordDamageRegion(1);
 
     auto& shaderManager = g_pGlobalState->shaderManager;
     shaderManager.initializeIfNeeded();
 
-    if (!shaderManager.isInitialized()) {
-        CPerformanceManager::instance().endFrame();
+    if (!shaderManager.isInitialized())
         return;
-    }
 
     const auto window = m_window.lock();
-    if (!window) {
-        CPerformanceManager::instance().endFrame();
+    if (!window)
         return;
-    }
 
     const auto source = g_pHyprRenderer->m_renderData.currentFB;
-    if (!source) {
-        CPerformanceManager::instance().endFrame();
+    if (!source)
         return;
-    }
 
     auto optBox = WindowGeometry::computeWindowBox(window, monitor);
-    if (!optBox) {
-        CPerformanceManager::instance().endFrame();
+    if (!optBox)
         return;
-    }
 
     CBox windowBox    = *optBox;
     CBox transformBox = windowBox;
@@ -256,8 +247,6 @@ void CGlassDecoration::renderPass(PHLMONITOR monitor, const float& alpha) {
     GlassRenderer::applyGlassEffect(m_sampleFramebuffer, source,
                                      windowBox, transformBox, glassAlpha,
                                      cornerRadius, roundingPower, m_samplePaddingRatio, ctx);
-
-    CPerformanceManager::instance().endFrame();
 }
 
 eDecorationType CGlassDecoration::getDecorationType() {
