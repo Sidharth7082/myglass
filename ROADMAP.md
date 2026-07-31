@@ -4,6 +4,55 @@
 
 ---
 
+## 🏆 Performance Golden Rules
+
+1. **Measure First**: Never optimize without empirical baseline measurements (`apitrace`, `perf`, `sysprof`).
+2. **Data-Driven**: Every optimization must include documented before/after benchmark evidence.
+3. **No Quality Compromises**: Never sacrifice visual correctness or rendering precision for speed.
+4. **Zero Allocation Loop**: Zero heap allocations (`new`, `delete`, `malloc`, string/vector allocations) in steady-state render loops.
+5. **Resource Reuse**: Reuse existing textures, FBOs, and data structures rather than allocating new ones.
+6. **Damage-Only Blur**: Blur only damaged regions; perform zero blur passes on unchanged content.
+7. **Early Culling**: Instantly skip hidden, occluded, zero-opacity, or offscreen window and layer surfaces.
+8. **Minimal GL Shifts**: Minimize OpenGL state changes, shader binds, FBO swaps, and uniform uploads.
+9. **Stable Frame Times**: Optimize for low frame-time jitter and zero stutter rather than peak FPS.
+10. **Maintainable Simplicity**: Prefer simple, maintainable architectures over complex micro-optimizations.
+
+---
+
+## 📐 Performance Budget
+
+Every feature and optimization in MyGlass must operate strictly within this performance budget:
+
+| Resource | Maximum Budget |
+|---|---|
+| **CPU Render Time** | **< 4.5 ms** |
+| **GPU Render Time** | **< 3.5 ms** |
+| **RAM Usage** | **< 50 MB** |
+| **VRAM Usage** | **< 90 MB** |
+| **Heap Allocations / Frame** | **0** (steady state) |
+| **FBO Creations / Frame** | **0** (steady state) |
+| **Texture Uploads / Frame** | **0** (steady state) |
+| **Shader Recompiles** | **0** (post-initialization) |
+| **Uniform Uploads** | **Dirty-only** (on change) |
+| **Blur Passes** | **Damaged regions only** |
+
+---
+
+## 🚪 v1.2.0 Release Gate Checklist
+
+Before tagging **v1.2.0**, all of the following requirements must be verified and checked off:
+
+- [ ] All 6 engineering phases completed according to architectural specifications
+- [ ] All benchmark targets met or explicitly justified with telemetry logs
+- [ ] Zero performance regressions compared to v1.1.0 baseline
+- [ ] Zero memory or OpenGL resource leaks (Valgrind & ASan clean)
+- [ ] Rock-solid stability under a 1-hour automated stress test
+- [ ] GitHub Actions CI pipeline passes cleanly on Arch Linux container
+- [ ] Release notes include empirical before/after benchmark comparison tables
+- [ ] Full documentation updated (`README.md`, `CHANGELOG.md`, `ROADMAP.md`)
+
+---
+
 ## 🏁 Phase Exit Criteria
 
 A phase is marked **complete** only when its exit criteria are verified by telemetry measurements under the benchmark protocol.
@@ -60,7 +109,6 @@ graph TD
 
 ### Phase 1 — Benchmark First & Telemetry Overlay
 - Add CPU/GPU timer queries, allocation hooks, and optional HUD overlay (`#ifdef DEBUG_OVERLAY`).
-- Track CPU frame time, GPU render time, draw calls, FBO counts, VRAM, and blur passes.
 
 ### Phase 2 — Zero Allocation Frame Loop
 - Replace per-frame allocations (`std::vector` resize, `std::string` formatting, map lookups) with fixed inline buffers and pre-allocated storage.
