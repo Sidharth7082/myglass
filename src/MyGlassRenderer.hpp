@@ -31,7 +31,8 @@ struct SMaskInfo {
 };
 
 void sampleBackground(SP<Render::IFramebuffer>& sampleFramebuffer, SP<Render::IFramebuffer> sourceFramebuffer,
-                       CBox box, Vector2D& outPaddingRatio, int downscale = 1);
+                       CBox box, Vector2D& outPaddingRatio, int downscale = 1,
+                       const CBox* pDamageBox = nullptr);
 
 // callerFramebuffer is re-bound after the blur ping-pong; the viewport is
 // restored from its size so it always matches the re-bound framebuffer

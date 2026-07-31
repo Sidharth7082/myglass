@@ -159,7 +159,13 @@ void CGlassLayerSurface::sampleAndRedirect(PHLMONITOR monitor, float alpha) {
         float blurStrength   = resolvePresetFloat(ctx, &SPresetValues::blurStrength, &SOverridableConfig::blurStrength);
         int downscale        = blurStrength >= GlassRenderer::BLUR_DOWNSCALE_THRESHOLD ? GlassRenderer::BLUR_DOWNSCALE_MAX : 1;
 
-        GlassRenderer::sampleBackground(m_sampleFramebuffer, source, transformBox, m_samplePaddingRatio, downscale);
+        CBox damageBox{};
+        if (!g_pHyprRenderer->m_renderData.damage.empty()) {
+            Hyprutils::Math::CRegion reg = g_pHyprRenderer->m_renderData.damage;
+            damageBox = reg.getExtents();
+        }
+
+        GlassRenderer::sampleBackground(m_sampleFramebuffer, source, transformBox, m_samplePaddingRatio, downscale, &damageBox);
 
         float blurRadius     = blurStrength * 12.0f / downscale;
         int blurIterations   = std::clamp(static_cast<int>(resolvePresetInt(ctx, &SPresetValues::blurIterations, &SOverridableConfig::blurIterations)), 1, 5);

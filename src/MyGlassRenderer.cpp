@@ -77,7 +77,8 @@ static void uploadThemeUniforms(const SResolveContext& ctx) {
 }
 
 void sampleBackground(SP<Render::IFramebuffer>& sampleFramebuffer, SP<Render::IFramebuffer> sourceFramebuffer,
-                       CBox box, Vector2D& outPaddingRatio, int downscale) {
+                       CBox box, Vector2D& outPaddingRatio, int downscale,
+                       const CBox* pDamageBox) {
     if (!sourceFramebuffer)
         return;
     const int pad = SAMPLE_PADDING_PX;
@@ -108,15 +109,58 @@ void sampleBackground(SP<Render::IFramebuffer>& sampleFramebuffer, SP<Render::IF
     const float xScale = static_cast<float>(sampleWidth) / fullWidth;
     const float yScale = static_cast<float>(sampleHeight) / fullHeight;
 
-    if (srcX0 < 0) { dstX0 += static_cast<int>(-srcX0 * xScale); srcX0 = 0; }
-    if (srcY0 < 0) { dstY0 += static_cast<int>(-srcY0 * yScale); srcY0 = 0; }
-    if (srcX1 > framebufferWidth)  { dstX1 -= static_cast<int>((srcX1 - framebufferWidth) * xScale);  srcX1 = framebufferWidth; }
-    if (srcY1 > framebufferHeight) { dstY1 -= static_cast<int>((srcY1 - framebufferHeight) * yScale); srcY1 = framebufferHeight; }
-
     outPaddingRatio = Vector2D(
         static_cast<double>(pad) / fullWidth,
         static_cast<double>(pad) / fullHeight
     );
+
+    // Phase 3.3: Scissored background sampling
+    if (pDamageBox && pDamageBox->width > 0 && pDamageBox->height > 0) {
+        int cropSrcX0 = std::max(srcX0, static_cast<int>(pDamageBox->x) - pad);
+        int cropSrcY0 = std::max(srcY0, static_cast<int>(pDamageBox->y) - pad);
+        int cropSrcX1 = std::min(srcX1, static_cast<int>(pDamageBox->x + pDamageBox->width) + pad);
+        int cropSrcY1 = std::min(srcY1, static_cast<int>(pDamageBox->y + pDamageBox->height) + pad);
+
+        if (cropSrcX1 > cropSrcX0 && cropSrcY1 > cropSrcY0) {
+            int cropDstX0 = static_cast<int>((cropSrcX0 - (box.x - pad)) * xScale);
+            int cropDstY0 = static_cast<int>((cropSrcY0 - (box.y - pad)) * yScale);
+            int cropDstX1 = static_cast<int>((cropSrcX1 - (box.x - pad)) * xScale);
+            int cropDstY1 = static_cast<int>((cropSrcY1 - (box.y - pad)) * yScale);
+
+            cropSrcX0 = std::clamp(cropSrcX0, 0, framebufferWidth);
+            cropSrcY0 = std::clamp(cropSrcY0, 0, framebufferHeight);
+            cropSrcX1 = std::clamp(cropSrcX1, 0, framebufferWidth);
+            cropSrcY1 = std::clamp(cropSrcY1, 0, framebufferHeight);
+
+            cropDstX0 = std::clamp(cropDstX0, 0, sampleWidth);
+            cropDstY0 = std::clamp(cropDstY0, 0, sampleHeight);
+            cropDstX1 = std::clamp(cropDstX1, 0, sampleWidth);
+            cropDstY1 = std::clamp(cropDstY1, 0, sampleHeight);
+
+            if (cropSrcX1 > cropSrcX0 && cropSrcY1 > cropSrcY0 && cropDstX1 > cropDstX0 && cropDstY1 > cropDstY0) {
+                glBindFramebuffer(GL_READ_FRAMEBUFFER, fbId(sourceFramebuffer));
+                glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbId(sampleFramebuffer));
+
+                g_pHyprOpenGL->setCapStatus(GL_SCISSOR_TEST, true);
+                glScissor(cropDstX0, cropDstY0, cropDstX1 - cropDstX0, cropDstY1 - cropDstY0);
+
+                glBlitFramebuffer(cropSrcX0, cropSrcY0, cropSrcX1, cropSrcY1,
+                                  cropDstX0, cropDstY0, cropDstX1, cropDstY1,
+                                  GL_COLOR_BUFFER_BIT, GL_LINEAR);
+
+                g_pHyprOpenGL->setCapStatus(GL_SCISSOR_TEST, false);
+
+                CPerformanceManager::instance().recordFramebufferBind(2);
+                CPerformanceManager::instance().recordDrawCall(1);
+                return;
+            }
+        }
+    }
+
+    if (srcX0 < 0) { dstX0 += static_cast<int>(-srcX0 * xScale); srcX0 = 0; }
+    if (srcY0 < 0) { dstY0 += static_cast<int>(-srcY0 * yScale); srcY0 = 0; }
+    if (srcX1 > framebufferWidth)  { dstX1 -= static_cast<int>((srcX1 - framebufferWidth) * xScale);  srcX1 = framebufferWidth; }
+    if (srcY1 > framebufferHeight) { dstY1 -= static_cast<int>((srcY1 - framebufferHeight) * yScale); srcY1 = framebufferHeight; }
 
     g_pHyprOpenGL->setCapStatus(GL_SCISSOR_TEST, false);
 
