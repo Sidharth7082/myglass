@@ -1,79 +1,121 @@
-# MyGlass
+<div align="center">
 
-A modern Apple-style Liquid Glass plugin for Hyprland.
+# 🧊 MyGlass
 
-[![Build](https://github.com/Sidharth7082/myglass/actions/workflows/build.yml/badge.svg)](https://github.com/Sidharth7082/myglass/actions/workflows/build.yml)
-[![GitHub Release](https://img.shields.io/github/v/release/Sidharth7082/myglass)](https://github.com/Sidharth7082/myglass/releases/latest)
-[![Hyprland](https://img.shields.io/badge/Hyprland-latest-blue.svg)](https://hyprland.org)
-[![License](https://img.shields.io/github/license/Sidharth7082/myglass)](LICENSE)
+**A modern, high-performance Apple-style Liquid Glass plugin for [Hyprland](https://hyprland.org).**
 
-**MyGlass** is a modern Hyprland plugin that provides Apple-style Liquid Glass effects for windows and layer surfaces. It features SDF-based edge refraction, specular highlights, dynamic glass rendering, desaturation, and adaptive luminance controls — all completely customizable per-preset, per-theme, and per-layer.
+[![Build](https://img.shields.io/github/actions/workflow/status/Sidharth7082/myglass/build.yml?branch=main&style=for-the-badge&logo=github)](https://github.com/Sidharth7082/myglass/actions/workflows/build.yml)
+[![Release](https://img.shields.io/github/v/release/Sidharth7082/myglass?style=for-the-badge&color=8A2BE2)](https://github.com/Sidharth7082/myglass/releases/latest)
+[![Hyprland](https://img.shields.io/badge/Hyprland-v0.56+-00b4d8?style=for-the-badge&logo=archlinux)](https://hyprland.org)
+[![Lua API](https://img.shields.io/badge/Lua-First--Class-000080?style=for-the-badge&logo=lua)](https://lua.org)
+[![License](https://img.shields.io/github/license/Sidharth7082/myglass?style=for-the-badge&color=brightgreen)](LICENSE)
 
----
+<br />
 
-## Features
-
-- **Apple-inspired Liquid Glass effect**: SDF-based height fields, edge refraction, specular highlights, and edge chromatic dispersion.
-- **Real-time blur rendering**: Efficient multi-pass Gaussian blur with damage-driven rendering and background caching.
-- **Lua configuration API**: Configure seamlessly via `hl.plugin.myglass` in Hyprland Lua setups.
-- **Custom glass presets**: Easily create and inherit custom glass presets for tailored window styles.
-- **Layer-specific presets**: Apply frosted glass effects to Waybar, SwayNC, Quickshell, and desktop widgets.
-- **Automatic loading through hyprpm**: Built directly against your running Hyprland version for full ABI compatibility.
-- **Lightweight and fast**: High-performance shader pipeline with zero GPU overhead on idle/static windows.
-- **Works across reboots**: Automatically persists and loads cleanly upon compositor restarts.
-- **Configurable tint, brightness and blur**: Granular control over tint color, opacity, desaturation, vibrancy, dimming, and boost.
-- **Open source**: Released under the BSD 3-Clause License.
+[✨ Features](#-features) • [🖼️ Screenshots](#%EF%B8%8F-screenshots) • [⚡ Quick Start](#-quick-start) • [⚙️ Configuration](#%EF%B8%8F-configuration) • [🎛️ Presets](#%EF%B8%8F-presets) • [📜 License](#-license)
 
 ---
 
-## Screenshots
+</div>
 
-![Desktop](assets/desktop.png)
-![Waybar](assets/waybar.png)
-![Launcher](assets/launcher.png)
+## 🌟 Overview
 
----
-
-## Requirements
-
-- **Hyprland** (latest)
-- **hyprpm**
-- **CMake**
-- **Meson/Ninja** if required
-- **GCC/Clang** (C++23 support)
+**MyGlass** transforms your Hyprland desktop into a luxury macOS-inspired liquid glass aesthetic. Powered by custom GLSL shaders and signed distance fields (SDF), it computes real-time edge refraction, chromatic aberration, specular highlights, and adaptive luminance adjustments across windows and Wayland layer surfaces.
 
 ---
 
-## Installation
+## ✨ Features
 
-### Install using hyprpm
+- 💧 **Apple-Inspired Liquid Glass**: SDF-driven height field rendering with dynamic edge refraction, chromatic dispersion, and lens curvature.
+- ⚡ **Real-Time Blur Pipeline**: Ultra-fast multi-pass Gaussian blur with damage-driven rendering and zero idle GPU overhead.
+- 📜 **First-Class Lua API**: Configure effortlessly using Hyprland's native Lua interface via `hl.plugin.myglass`.
+- 🎨 **Custom Glass Presets**: Create reusable glass profiles with parameter inheritance.
+- 🪟 **Per-Layer Surface Support**: Seamlessly glassify Waybar, SwayNC, Quickshell, Rofi, and desktop widgets.
+- 🔄 **Reboot & Session Persistence**: Managed through `hyprpm` for automatic rebuilding and persistence across restarts.
+- 🎛️ **Granular Tuning**: Fine-tune tint color, opacity, desaturation, vibrancy, brightness, dark/light themes, and edge thickness.
+- 🛡️ **Open Source**: 100% free and open-source under the BSD 3-Clause License.
+
+---
+
+## 🖼️ Screenshots
+
+<div align="center">
+
+| 🖥️ Desktop | 📊 Waybar Surface | 🚀 Launcher / Menu |
+| :---: | :---: | :---: |
+| ![Desktop](assets/desktop.png) | ![Waybar](assets/waybar.png) | ![Launcher](assets/launcher.png) |
+
+</div>
+
+---
+
+## 📋 Requirements
+
+Before installing, ensure your environment meets the following requirements:
+
+| Component | Requirement |
+|---|---|
+| **Compositor** | [Hyprland](https://hyprland.org) (v0.55+ / latest) |
+| **Plugin Manager** | `hyprpm` (comes bundled with Hyprland) |
+| **Build System** | `CMake`, `make`, `pkg-config` |
+| **Compiler** | `GCC` or `Clang` with C++23 support |
+| **Libraries** | `pixman-1`, `libdrm`, OpenGL / GLES headers |
+
+---
+
+## ⚡ Quick Start
+
+### 1. Install via `hyprpm` (Recommended)
+
+`hyprpm` compiles MyGlass directly against your running Hyprland headers to guarantee ABI binary compatibility:
 
 ```bash
+# Add repository
 hyprpm add https://github.com/Sidharth7082/myglass
+
+# Update & compile against running Hyprland version
 hyprpm update
+
+# Enable plugin
 hyprpm enable myglass
+
+# Reload Hyprland compositor
 hyprctl reload
 ```
 
-### Manual Building
+---
+
+### 2. Manual Build from Source
 
 ```bash
 git clone https://github.com/Sidharth7082/myglass.git
 cd myglass
+
+# Compile shared library
 make -j$(nproc)
+
+# Load plugin dynamically
 hyprctl plugin load $(pwd)/myglass.so
+```
+
+To load automatically in your `hyprland.conf`:
+```ini
+plugin = /path/to/myglass.so
 ```
 
 ---
 
-## Configuration
+## ⚙️ Configuration
 
-### 1. Lua Configuration (Hyprland 0.55+)
+### Native Lua Configuration (Hyprland 0.55+)
+
+Add the following to your Hyprland Lua config:
 
 ```lua
 if hl.plugin.myglass then
     local hg = hl.plugin.myglass
 
+    -- Global plugin options
     hg.config({
         default_theme = "dark",
         default_preset = "clear",
@@ -86,13 +128,13 @@ if hl.plugin.myglass then
         layers = { enabled = true },
     })
 
-    -- Layer surfaces: whitelist and configure per namespace
+    -- Layer surface rules (Waybar, SwayNC, Quickshell)
     hg.layer("waybar", { preset = "subtle", mask_threshold = 0.05 })
     hg.layer("swaync")
     hg.layer("quickshell:bezel", { preset = "ui", mask_threshold = 0.3 })
     hg.layer("debug-panel", { exclude = true })
 
-    -- User-defined presets
+    -- Custom presets
     hg.preset("clear", {
         glass_opacity = 0.8,
         blur_strength = 1.5,
@@ -109,17 +151,15 @@ if hl.plugin.myglass then
 end
 ```
 
-### 2. Legacy `.conf` Configuration
+<details>
+<summary><b>Click to expand Legacy .conf Configuration</b></summary>
 
 ```ini
 plugin:myglass {
     default_theme = dark
     default_preset = clear
     tint_color = 0x8899aa22
-
     brightness = 0.9
-    dark:brightness = 0.82
-    light:adaptive_boost = 0.5
 
     preset = name:clear, glass_opacity:0.8, blur_strength:1.5
     preset = name:contrasted, inherits:high_contrast, contrast:1.2
@@ -131,52 +171,69 @@ plugin:myglass {
     }
 }
 ```
+</details>
 
 ---
 
-## Presets
+## 🎛️ Presets & Window Rules
 
-| Preset | Description |
-|---|---|
-| `clear` | Transparent rounded glass plate with subtle edge refraction. |
-| `subtle` | Light blur, minimal refraction, and soft highlights. |
-| `high_contrast` | Punchy contrast, strong tinting, and crisp edge refraction. |
-| `glass` | Thick glass block effect with high chromatic aberration. |
+### Built-in Presets
 
----
+| Preset | Description | Visual Characteristics |
+|---|---|---|
+| `clear` | Rounded translucent glass plate | Subtle bezel refraction, crisp background |
+| `subtle` | Soft frosted glass | Reduced blur radius, minimal specular highlights |
+| `high_contrast` | Vivid punchy glass | High contrast, strong tinting, sharp edge refraction |
+| `glass` | Thick glass block | High chromatic aberration, deep refraction lens |
 
-## Window Tags & Overrides
+### Per-Window Tag Overrides
 
-Custom rules can be attached per window via Hyprland window tags:
+You can control glass decoration dynamically per window using Hyprland window tags:
 
-- **Enable / Disable**: `+myglass_enabled`, `+myglass_disabled`
-- **Theme Selection**: `+myglass_theme_dark`, `+myglass_theme_light`
-- **Preset Selection**: `+myglass_preset_<name>`
-
-```bash
-# Disable glass effect on mpv
-hyprctl dispatch tagwindow +myglass_disabled
-
-# Apply subtle preset to a specific window
-hyprctl dispatch tagwindow +myglass_preset_subtle
-```
+| Tag | Function | Example Usage |
+|---|---|---|
+| `+myglass_enabled` | Force enable glass on window | `hyprctl dispatch tagwindow +myglass_enabled` |
+| `+myglass_disabled` | Disable glass on window | `hyprctl dispatch tagwindow +myglass_disabled` |
+| `+myglass_theme_dark` | Set dark theme override | `hyprctl dispatch tagwindow +myglass_theme_dark` |
+| `+myglass_theme_light` | Set light theme override | `hyprctl dispatch tagwindow +myglass_theme_light` |
+| `+myglass_preset_<name>` | Apply preset to window | `hyprctl dispatch tagwindow +myglass_preset_subtle` |
 
 ---
 
-## Troubleshooting
+## 🚀 Performance & Optimization
 
-### Version Mismatch Notification
-If Hyprland reports an ABI version mismatch, rebuild the plugin against your running Hyprland version:
+- **Damage-Driven Rendering**: Background blurs are only recalculated when window positions or underlying content change.
+- **Cached Glass Textures**: Idle windows render with zero additional GPU draw calls.
+- **Tuning for Low-End GPUs**: Reduce `blur_iterations` from `3` to `1` or `2` for a significant boost on integrated graphics.
+
+---
+
+## 🔧 Troubleshooting
+
+<details>
+<summary><b>ABI Version Mismatch Warning</b></summary>
+
+If Hyprland displays an ABI version mismatch after updating the compositor, rebuild MyGlass against the running version:
 ```bash
 hyprpm update
 ```
+</details>
+
+<details>
+<summary><b>Glass Effect Not Displaying</b></summary>
+
+1. Ensure window transparency/opacity is enabled in your window manager rules.
+2. If `manage_window_blur = false`, verify compositor blur caching doesn't block plugin decorations (`windowrule = noblur, <window>`).
+</details>
 
 ---
 
-## License
+## 👤 Author & Credits
 
-Distributed under the [BSD 3-Clause License](LICENSE).
+Created and maintained by **[Sidharth7082](https://github.com/Sidharth7082)** (Capture).
 
 ---
 
-Author: **[Sidharth7082](https://github.com/Sidharth7082)** (Capture)
+## 📄 License
+
+This project is licensed under the [BSD 3-Clause License](LICENSE) - see the LICENSE file for details.
