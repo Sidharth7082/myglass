@@ -8,31 +8,33 @@ on:
   pull_request:
     branches:
       - main
+      - dev
 
 jobs:
   build:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
+    container:
+      image: archlinux:latest
 
     steps:
+      - name: Install dependencies
+        run: |
+          pacman -Syu --noconfirm
+          pacman -S --noconfirm --needed \
+            git \
+            base-devel \
+            hyprland \
+            pixman \
+            libdrm \
+            pkgconf
+
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install dependencies
-        run: |
-          sudo apt update
-          sudo apt install -y \
-            build-essential \
-            cmake \
-            ninja-build \
-            pkg-config \
-            libgl1-mesa-dev \
-            libegl1-mesa-dev \
-            libwayland-dev \
-            wayland-protocols \
-            libxkbcommon-dev \
-            wget \
-            git
+      - name: Fix git ownership
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
 
       - name: Build
         run: |
           make -j$(nproc)
+
