@@ -150,6 +150,7 @@ void sampleBackground(SP<Render::IFramebuffer>& sampleFramebuffer, SP<Render::IF
 
                 g_pHyprOpenGL->setCapStatus(GL_SCISSOR_TEST, false);
 
+                CPerformanceManager::instance().recordBlitPixelsProcessedEst(static_cast<size_t>(cropSrcX1 - cropSrcX0) * static_cast<size_t>(cropSrcY1 - cropSrcY0));
                 CPerformanceManager::instance().recordFramebufferBind(2);
                 CPerformanceManager::instance().recordDrawCall(1);
                 return;
@@ -174,6 +175,7 @@ void sampleBackground(SP<Render::IFramebuffer>& sampleFramebuffer, SP<Render::IF
                       dstX0, dstY0, dstX1, dstY1,
                       GL_COLOR_BUFFER_BIT, GL_LINEAR);
 
+    CPerformanceManager::instance().recordBlitPixelsProcessedEst(static_cast<size_t>(srcX1 - srcX0) * static_cast<size_t>(srcY1 - srcY0));
     CPerformanceManager::instance().recordFramebufferBind(3);
     CPerformanceManager::instance().recordDrawCall(1);
 }
@@ -249,7 +251,8 @@ void blurBackground(SP<Render::IFramebuffer> sampleFramebuffer, float radius, in
         CPerformanceManager::instance().recordFramebufferBind(2);
 
         size_t passPixels = useScissor ? (static_cast<size_t>(sx1 - sx0) * static_cast<size_t>(sy1 - sy0)) : (static_cast<size_t>(width) * static_cast<size_t>(height));
-        CPerformanceManager::instance().recordBlurPixelsProcessed(passPixels * 2);
+        size_t fullPixels = static_cast<size_t>(width) * static_cast<size_t>(height) * 2;
+        CPerformanceManager::instance().recordBlurPixelsProcessedEst(passPixels * 2, fullPixels);
     }
 
     if (useScissor) {

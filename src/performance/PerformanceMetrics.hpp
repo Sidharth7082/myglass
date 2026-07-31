@@ -20,14 +20,16 @@ struct PerformanceMetrics {
     uint32_t layersRendered         = 0;
     uint32_t damageRegions          = 0;
 
-    // Damage telemetry metrics (Phase 3.1 & 3.4)
-    uint32_t damageRectCount       = 0;
-    size_t   totalDamagedPixelArea = 0;
-    size_t   maxDamageRectArea     = 0;
-    size_t   boundingUnionArea     = 0;
-    size_t   blurPixelsProcessed   = 0;
-    float    damagedMonitorPct     = 0.0f;
-    float    unionEfficiency       = 0.0f;
+    // Damage & Workload Fill Estimates (Phase 3.1, 3.3 & 3.4)
+    uint32_t damageRectCount          = 0;
+    size_t   totalDamagedPixelArea    = 0;
+    size_t   maxDamageRectArea        = 0;
+    size_t   boundingUnionArea        = 0;
+    size_t   blitPixelsProcessedEst   = 0;
+    size_t   blurPixelsProcessedEst   = 0;
+    float    damagedMonitorPct        = 0.0f;
+    float    unionEfficiency          = 0.0f;
+    float    scissoredBlurCoveragePct = 0.0f;
 
     // Memory metrics
     size_t ramBytes  = 0;
@@ -37,25 +39,27 @@ struct PerformanceMetrics {
     uint32_t heapAllocations = 0;
 
     void resetFrameCounters() noexcept {
-        cpuFrameTimeMs         = 0.0;
-        gpuFrameTimeMs         = 0.0;
-        drawCalls              = 0;
-        blurPasses             = 0;
-        framebufferBinds       = 0;
-        framebufferAllocations = 0;
-        textureUploads         = 0;
-        shaderBinds            = 0;
-        uniformUploads         = 0;
-        windowsRendered        = 0;
-        layersRendered         = 0;
-        damageRegions          = 0;
-        damageRectCount        = 0;
-        totalDamagedPixelArea  = 0;
-        maxDamageRectArea      = 0;
-        boundingUnionArea      = 0;
-        blurPixelsProcessed    = 0;
-        damagedMonitorPct      = 0.0f;
-        unionEfficiency        = 0.0f;
-        heapAllocations        = 0;
+        cpuFrameTimeMs           = 0.0;
+        gpuFrameTimeMs           = 0.0;
+        drawCalls                = 0;
+        blurPasses               = 0;
+        framebufferBinds         = 0;
+        framebufferAllocations   = 0;
+        textureUploads           = 0;
+        shaderBinds              = 0;
+        uniformUploads           = 0;
+        windowsRendered          = 0;
+        layersRendered           = 0;
+        damageRegions            = 0;
+        damageRectCount          = 0;
+        totalDamagedPixelArea    = 0;
+        maxDamageRectArea        = 0;
+        boundingUnionArea        = 0;
+        blitPixelsProcessedEst   = 0;
+        blurPixelsProcessedEst   = 0;
+        damagedMonitorPct        = 0.0f;
+        unionEfficiency          = 0.0f;
+        scissoredBlurCoveragePct = 0.0f;
+        heapAllocations          = 0;
     }
 };

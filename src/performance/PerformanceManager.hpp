@@ -49,8 +49,15 @@ public:
     inline void recordBlurPass(uint32_t count = 1) noexcept {
         if (m_telemetryEnabled) m_metrics.blurPasses += count;
     }
-    inline void recordBlurPixelsProcessed(size_t count) noexcept {
-        if (m_telemetryEnabled) m_metrics.blurPixelsProcessed += count;
+    inline void recordBlitPixelsProcessedEst(size_t count) noexcept {
+        if (m_telemetryEnabled) m_metrics.blitPixelsProcessedEst += count;
+    }
+    inline void recordBlurPixelsProcessedEst(size_t count, size_t fullFramebufferPixels = 0) noexcept {
+        if (!m_telemetryEnabled) return;
+        m_metrics.blurPixelsProcessedEst += count;
+        if (fullFramebufferPixels > 0) {
+            m_metrics.scissoredBlurCoveragePct = static_cast<float>((static_cast<double>(count) / static_cast<double>(fullFramebufferPixels)) * 100.0);
+        }
     }
     inline void recordFramebufferBind(uint32_t count = 1) noexcept {
         if (m_telemetryEnabled) m_metrics.framebufferBinds += count;
