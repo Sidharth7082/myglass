@@ -59,9 +59,9 @@ hyprctl reload
 
 <div align="center">
 
-| 🖥️ Desktop | 📊 Waybar Surface | 🚀 Launcher / Menu |
-| :---: | :---: | :---: |
-| ![Desktop](assets/desktop.png) | ![Waybar](assets/waybar.png) | ![Launcher](assets/launcher.png) |
+| 🖥️ Desktop | 📊 Waybar Surface |
+| :---: | :---: |
+| ![Desktop](assets/desktop.png) | ![Waybar](assets/waybar.png) |
 
 </div>
 
