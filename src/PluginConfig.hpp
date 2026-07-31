@@ -22,10 +22,10 @@ inline constexpr std::string_view TAG_DISABLED = "myglass_disabled";
 // with a trailing '*'. CTagKeeper::isTagged() normalizes this for exact lookups,
 // but code iterating getTags() or registering preset names must strip it itself
 // so "firefox" and "firefox*" refer to the same preset.
-inline std::string stripDynamicTagMarker(std::string_view tag) {
+inline std::string_view stripDynamicTagMarker(std::string_view tag) {
     if (tag.ends_with('*'))
         tag.remove_suffix(1);
-    return std::string(tag);
+    return tag;
 }
 
 // Sentinel: "not set by user, inherit from parent layer"
@@ -209,7 +209,7 @@ struct SPluginConfig {
 
 // Context for preset-aware value resolution
 struct SResolveContext {
-    const std::string&                                    presetName;
+    std::string_view                                      presetName;
     bool                                                  isDark;
     const SPluginConfig&                                  config;
     const std::unordered_map<std::string, SCustomPreset>& customPresets;

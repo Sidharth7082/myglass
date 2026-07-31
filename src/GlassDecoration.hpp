@@ -51,7 +51,7 @@ class CGlassDecoration : public IHyprWindowDecoration {
 
     [[nodiscard]] bool        resolveEnabled() const;
     [[nodiscard]] bool        resolveThemeIsDark() const;
-    [[nodiscard]] std::string resolvePresetName() const;
+    [[nodiscard]] std::string_view resolvePresetName() const;
 
     friend class CGlassPassElement;
 };

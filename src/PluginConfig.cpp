@@ -448,7 +448,7 @@ static int handleLuaPreset(lua_State* L) {
 
     // Table: preset("clear", { glass_opacity = 0.8, dark = { brightness = 0.7 }, ... })
     if (nargs == 2 && lua_isstring(L, 1) && lua_istable(L, 2)) {
-        std::string baseName = stripDynamicTagMarker(lua_tostring(L, 1));
+        std::string baseName = std::string(stripDynamicTagMarker(lua_tostring(L, 1)));
         auto& preset = s_pendingPresets[baseName];
         preset.name = baseName;
 
@@ -458,7 +458,7 @@ static int handleLuaPreset(lua_State* L) {
             const char* key = lua_tostring(L, -2);
 
             if (strcmp(key, "inherits") == 0 && lua_isstring(L, -1)) {
-                preset.inherits = stripDynamicTagMarker(lua_tostring(L, -1));
+                preset.inherits = std::string(stripDynamicTagMarker(lua_tostring(L, -1)));
             } else if (strcmp(key, "dark") == 0 && lua_istable(L, -1)) {
                 readPresetValuesFromTable(L, lua_gettop(L), preset.dark);
             } else if (strcmp(key, "light") == 0 && lua_istable(L, -1)) {
@@ -564,15 +564,15 @@ void validateConfig() {
 // ── Preset-aware resolution ──────────────────────────────────────────────────
 
 static float resolvePresetFloatImpl(
-    const std::string& presetName, bool isDark,
+    std::string_view presetName, bool isDark,
     float SPresetValues::* presetField,
     Hyprlang::FLOAT* const* SOverridableConfig::* configField,
     const SPluginConfig& config,
     const std::unordered_map<std::string, SCustomPreset>& customPresets,
     float hardcodedDefault, int depth
 ) {
-    if (depth < MAX_PRESET_INHERITANCE_DEPTH) {
-        if (auto it = customPresets.find(presetName); it != customPresets.end()) {
+    if (depth < MAX_PRESET_INHERITANCE_DEPTH && !customPresets.empty()) {
+        if (auto it = customPresets.find(std::string(presetName)); it != customPresets.end()) {
             const auto& preset = it->second;
 
             const auto& themeVariant = isDark ? preset.dark : preset.light;
@@ -613,15 +613,15 @@ float resolvePresetFloat(
 }
 
 static int64_t resolvePresetIntImpl(
-    const std::string& presetName, bool isDark,
+    std::string_view presetName, bool isDark,
     int64_t SPresetValues::* presetField,
     Hyprlang::INT* const* SOverridableConfig::* configField,
     const SPluginConfig& config,
     const std::unordered_map<std::string, SCustomPreset>& customPresets,
     int64_t hardcodedDefault, int depth
 ) {
-    if (depth < MAX_PRESET_INHERITANCE_DEPTH) {
-        if (auto it = customPresets.find(presetName); it != customPresets.end()) {
+    if (depth < MAX_PRESET_INHERITANCE_DEPTH && !customPresets.empty()) {
+        if (auto it = customPresets.find(std::string(presetName)); it != customPresets.end()) {
             const auto& preset = it->second;
 
             const auto& themeVariant = isDark ? preset.dark : preset.light;

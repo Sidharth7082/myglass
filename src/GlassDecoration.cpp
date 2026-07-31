@@ -62,6 +62,13 @@ void CGlassDecoration::withdrawNoBlur() {
     } catch (...) {}
 }
 
+namespace {
+static const std::string STATIC_TAG_DISABLED    = std::string(TAG_DISABLED);
+static const std::string STATIC_TAG_ENABLED     = std::string(TAG_ENABLED);
+static const std::string STATIC_TAG_THEME_LIGHT = std::string(TAG_THEME_PREFIX) + "light";
+static const std::string STATIC_TAG_THEME_DARK  = std::string(TAG_THEME_PREFIX) + "dark";
+} // namespace
+
 bool CGlassDecoration::resolveEnabled() const {
     const auto& config = g_pGlobalState->config;
     const bool globalEnabled = config.enabled && **config.enabled;
@@ -72,9 +79,9 @@ bool CGlassDecoration::resolveEnabled() const {
             const auto& tags = window->m_ruleApplicator->m_tagKeeper;
             // isTagged() already matches dynamic tags ("tag*") — no stripping needed here.
             // Disabled tag wins over enabled tag if both are present.
-            if (tags.isTagged(std::string(TAG_DISABLED)))
+            if (tags.isTagged(STATIC_TAG_DISABLED))
                 return false;
-            if (tags.isTagged(std::string(TAG_ENABLED)))
+            if (tags.isTagged(STATIC_TAG_ENABLED))
                 return true;
         }
     } catch (...) {}
@@ -86,11 +93,9 @@ bool CGlassDecoration::resolveThemeIsDark() const {
     try {
         const auto window = m_window.lock();
         if (window && window->m_ruleApplicator) {
-            const std::string lightTag = std::string(TAG_THEME_PREFIX) + "light";
-            const std::string darkTag  = std::string(TAG_THEME_PREFIX) + "dark";
-            if (window->m_ruleApplicator->m_tagKeeper.isTagged(lightTag))
+            if (window->m_ruleApplicator->m_tagKeeper.isTagged(STATIC_TAG_THEME_LIGHT))
                 return false;
-            if (window->m_ruleApplicator->m_tagKeeper.isTagged(darkTag))
+            if (window->m_ruleApplicator->m_tagKeeper.isTagged(STATIC_TAG_THEME_DARK))
                 return true;
         }
 
@@ -103,20 +108,20 @@ bool CGlassDecoration::resolveThemeIsDark() const {
     return true;
 }
 
-std::string CGlassDecoration::resolvePresetName() const {
+std::string_view CGlassDecoration::resolvePresetName() const {
     try {
         const auto window = m_window.lock();
         if (window && window->m_ruleApplicator) {
             for (const auto& tag : window->m_ruleApplicator->m_tagKeeper.getTags()) {
                 if (tag.starts_with(TAG_PRESET_PREFIX))
-                    return stripDynamicTagMarker(tag.substr(TAG_PRESET_PREFIX.size()));
+                    return stripDynamicTagMarker(std::string_view(tag).substr(TAG_PRESET_PREFIX.size()));
             }
         }
 
         const auto& config = g_pGlobalState->config;
         const auto preset = readStringConfig(config.defaultPreset);
         if (!preset.empty())
-            return std::string(preset);
+            return preset;
     } catch (...) {}
 
     return "default";
@@ -206,7 +211,7 @@ void CGlassDecoration::renderPass(PHLMONITOR monitor, const float& alpha) {
         g_pHyprRenderer->m_renderData.pMonitor->m_transformedSize.y);
 
     const bool isDark          = resolveThemeIsDark();
-    const std::string preset   = resolvePresetName();
+    const std::string_view preset = resolvePresetName();
     const SResolveContext ctx  = {preset, isDark, g_pGlobalState->config, g_pGlobalState->customPresets};
 
     const uint64_t currentGeneration = g_pGlobalState->getSceneGeneration(monitor);
