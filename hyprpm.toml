@@ -3,7 +3,7 @@ name = "myglass"
 authors = ["Hyprnux"]
 description = "Apple-style Liquid Glass effect for Hyprland"
 
-# Map a Hyprland release commit -> the hyprglass commit that builds against it.
+# Map a Hyprland release commit -> the myglass commit that builds against it.
 # hyprpm reads the user's running Hyprland commit, finds the matching pin, and
 # resets this repo to the paired commit before building. If no pin matches it
 # falls back to the default branch (main) HEAD, which always targets the latest

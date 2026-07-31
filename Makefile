@@ -1,4 +1,4 @@
-# HyprGlass Plugin
+# MyGlass Plugin
 
 CXX ?= g++
 CXXFLAGS = -fPIC -g -O2 -std=c++23
