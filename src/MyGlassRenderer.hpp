@@ -38,7 +38,8 @@ void sampleBackground(SP<Render::IFramebuffer>& sampleFramebuffer, SP<Render::IF
 // restored from its size so it always matches the re-bound framebuffer
 // (monitor fields would be wrong on 90°/270° transformed monitors).
 void blurBackground(SP<Render::IFramebuffer> sampleFramebuffer, float radius, int iterations,
-                    SP<Render::IFramebuffer> callerFramebuffer);
+                    SP<Render::IFramebuffer> callerFramebuffer,
+                    const CBox* pDamageBox = nullptr);
 
 // When mask is non-null (layers only), the shader composites the surface content
 // over the glass effect in a single pass. When mask is null (windows), the shader

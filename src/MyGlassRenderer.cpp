@@ -179,7 +179,7 @@ void sampleBackground(SP<Render::IFramebuffer>& sampleFramebuffer, SP<Render::IF
 }
 
 void blurBackground(SP<Render::IFramebuffer> sampleFramebuffer, float radius, int iterations,
-                    SP<Render::IFramebuffer> callerFramebuffer) {
+                    SP<Render::IFramebuffer> callerFramebuffer, const CBox* pDamageBox) {
     auto& shaderManager = g_pGlobalState->shaderManager;
     if (!sampleFramebuffer || !callerFramebuffer || radius <= 0.0f || iterations <= 0 || !shaderManager.isInitialized())
         return;
@@ -215,6 +215,23 @@ void blurBackground(SP<Render::IFramebuffer> sampleFramebuffer, float radius, in
     g_pHyprOpenGL->setViewport(0, 0, width, height);
     glActiveTexture(GL_TEXTURE0);
 
+    // Phase 3.4: Padded scissored Gaussian blur passes
+    bool useScissor = false;
+    if (pDamageBox && pDamageBox->width > 0 && pDamageBox->height > 0) {
+        // Kernel padding formula: ceil(radius * sqrt(iterations)) + 4
+        int pad = static_cast<int>(std::ceil(radius * std::sqrt(static_cast<double>(iterations)))) + 4;
+        int sx0 = std::clamp(static_cast<int>(pDamageBox->x) - pad, 0, width);
+        int sy0 = std::clamp(static_cast<int>(pDamageBox->y) - pad, 0, height);
+        int sx1 = std::clamp(static_cast<int>(pDamageBox->x + pDamageBox->width) + pad, 0, width);
+        int sy1 = std::clamp(static_cast<int>(pDamageBox->y + pDamageBox->height) + pad, 0, height);
+
+        if (sx1 > sx0 && sy1 > sy0) {
+            useScissor = true;
+            g_pHyprOpenGL->setCapStatus(GL_SCISSOR_TEST, true);
+            glScissor(sx0, sy0, sx1 - sx0, sy1 - sy0);
+        }
+    }
+
     for (int iteration = 0; iteration < iterations; iteration++) {
         glBindFramebuffer(GL_FRAMEBUFFER, fbId(blurTempFramebuffer));
         sampleFramebuffer->getTexture()->bind();
@@ -229,6 +246,10 @@ void blurBackground(SP<Render::IFramebuffer> sampleFramebuffer, float radius, in
         CPerformanceManager::instance().recordBlurPass(1);
         CPerformanceManager::instance().recordDrawCall(2);
         CPerformanceManager::instance().recordFramebufferBind(2);
+    }
+
+    if (useScissor) {
+        g_pHyprOpenGL->setCapStatus(GL_SCISSOR_TEST, false);
     }
 
     glBindFramebuffer(GL_FRAMEBUFFER, fbId(callerFramebuffer));
