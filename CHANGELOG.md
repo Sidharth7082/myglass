@@ -1,4 +1,17 @@
 
+## [v1.1.0] - 2026-07-31
+
+### Features & Refactoring
+
+* Rename HyprGlass to MyGlass and register `myglass` namespace
+* Update Lua configuration and plugin integration to use `myglass` namespace
+* Full compatibility with Hyprland 0.56.1
+
+### CI/CD & Build System
+
+* Update GitHub Actions workflow to build in Arch Linux container with Hyprland development headers
+* Fixed missing package dependencies in CI pipeline (`hyprland`, `pixman`, `libdrm`)
+
 ## [v0.7.0](https://github.com/Hyprnux/hyprglass/compare/v0.6.4...v0.7.0) - 2026-07-20
 
 ### Bug Fixes
