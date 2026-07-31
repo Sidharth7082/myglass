@@ -111,7 +111,7 @@ Copy and paste this config snippet into your Hyprland configuration file to cust
 ### 📜 Lua Configuration (`hyprland.lua`)
 
 ```lua
-if hl.plugin.myglass then
+if hl.plugin and hl.plugin.myglass then
     local hg = hl.plugin.myglass
 
     -- Main Settings
