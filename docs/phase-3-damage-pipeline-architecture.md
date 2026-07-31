@@ -139,9 +139,22 @@ A window or layer surface pass is **instantly skipped** (0 draw calls, 0 FBO bin
 
 ---
 
-## 8. Incremental Sub-Phase Roadmap
+## 8. Incremental Sub-Phase Roadmap & Exit Criteria
 
-To maintain build stability and allow isolated benchmark verification, Phase 3 is divided into 6 distinct sub-milestones:
+To maintain build stability and allow isolated benchmark verification, Phase 3 is divided into 6 distinct sub-milestones with explicit exit criteria:
+
+| Sub-Phase | Focus | Exit Criteria |
+|---|---|---|
+| **3.1** | **Damage Collection & Telemetry** | Damage rectangles collected correctly; telemetry log records damage region counts; **0 rendering or visual changes**. |
+| **3.2** | **Scissor Scaffolding & State Tracking** | Scissor rectangles active with **100% pixel-identical output** compared to baseline (0 visual seams or tile artifacts). |
+| **3.3** | **Scissored Background Sampling** | Background sampling (`sampleBackground` `glBlitFramebuffer`) limited strictly to damaged bounding boxes; benchmark shows reduced blit workload. |
+| **3.4** | **Scissored Gaussian Blur & Padding** | Ping-pong blur passes restricted to padded damage boxes (`padding = ceil(R_base * sqrt(I)) + 4`); **0 visible seams, edge bleed, or pixelation**. |
+| **3.5** | **Scene Generation & Cache Invalidation** | Cache invalidates correctly for all 6 documented triggers; static backgrounds reuse cached textures with **0 stale frames**. |
+| **3.6** | **Occlusion Culling & Early-Outs** | Fully transparent, offscreen, or occluded surfaces skipped completely (**0 FBO binds / 0 blur passes**) without visual regressions. |
+
+---
+
+### Detailed Sub-Phase Specifications
 
 ### 3.1 — Damage Collection & Telemetry
 - Capture monitor damage regions (`m_renderData.damage`).

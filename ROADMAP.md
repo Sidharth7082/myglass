@@ -120,13 +120,16 @@ graph TD
 
 ### Phase 3 — Damage Pipeline Rewrite (Architecture Designed 🚧)
 - Detailed architectural specification created in [`docs/phase-3-damage-pipeline-architecture.md`](file:///home/capture/Downloads/myglass/docs/phase-3-damage-pipeline-architecture.md).
-- Incremental sub-phases:
-  - **3.1**: Damage Collection & Telemetry
-  - **3.2**: Scissor Scaffolding & State Tracking
-  - **3.3**: Scissored Background Sampling
-  - **3.4**: Scissored Gaussian Blur & Kernel Padding
-  - **3.5**: Scene Generation & Cache Invalidation Matrix
-  - **3.6**: Occlusion Culling & Early-Outs
+- Incremental sub-phases and exit criteria:
+
+| Sub-Phase | Focus | Exit Criteria |
+|---|---|---|
+| **3.1** | **Damage Collection & Telemetry** | Damage rects collected; telemetry tracks damage region counts; **0 rendering changes**. |
+| **3.2** | **Scissor Scaffolding & State** | Scissor bounds active with **100% pixel-identical output** vs baseline. |
+| **3.3** | **Scissored Background Sampling** | Background sampling (`glBlitFramebuffer`) restricted to damage bounds; fill-rate reduced. |
+| **3.4** | **Scissored Gaussian Blur & Padding** | Ping-pong blur passes restricted to padded damage boxes; **0 seams or edge bleed**. |
+| **3.5** | **Scene Generation & Invalidation** | Cache invalidates on all 6 triggers; static backgrounds reuse textures with **0 stale frames**. |
+| **3.6** | **Occlusion Culling & Early-Outs** | Fully transparent/offscreen/occluded surfaces skipped (**0 FBO binds / 0 blurs**). |
 
 ### Phase 4 — Blur Texture Cache
 - Cache blurred textures per window/layer surface; invalidate on scene generation bump or transform updates.
