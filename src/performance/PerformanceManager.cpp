@@ -129,6 +129,7 @@ void CPerformanceManager::renderDamageOverlay(const Hyprutils::Math::CRegion& da
     if (!m_debugOverlayEnabled || damageRegion.empty() || !g_pHyprOpenGL)
         return;
 
+    // 1. Draw raw compositor damage rectangles in translucent red
     for (const auto& box : damageRegion.getRects()) {
         CBox rectBox{
             static_cast<double>(box.x1),
@@ -140,6 +141,14 @@ void CPerformanceManager::renderDamageOverlay(const Hyprutils::Math::CRegion& da
             Render::GL::CHyprOpenGLImpl::SRectRenderData data;
             g_pHyprOpenGL->renderRect(rectBox, CHyprColor{1.0, 0.2, 0.2, 0.25}, data);
         }
+    }
+
+    // 2. Draw computed bounding-box scissor region in translucent green
+    Hyprutils::Math::CRegion reg = damageRegion;
+    CBox unionBox = reg.getExtents();
+    if (unionBox.width > 0.0 && unionBox.height > 0.0) {
+        Render::GL::CHyprOpenGLImpl::SRectRenderData data;
+        g_pHyprOpenGL->renderRect(unionBox, CHyprColor{0.2, 0.9, 0.3, 0.20}, data);
     }
 }
 
