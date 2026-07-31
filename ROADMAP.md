@@ -76,6 +76,8 @@ To ensure reproducible metrics across commits, all benchmarks are executed again
   1. **Idle Test (60s)**: Completely static desktop with zero user input.
   2. **Movement Test (60s)**: Continuous window dragging across monitors.
   3. **Resize Stress Test (60s)**: Rapid window resizing and workspace switching.
+  4. **Open/Close Stress Test (60s)**: Rapid creation and destruction of multiple transparent windows.
+  5. **Cross-Monitor Drag Test (60s)**: Moving windows across monitor boundaries to test multi-output damage invalidation.
 
 ---
 
@@ -122,14 +124,14 @@ graph TD
 - Detailed architectural specification created in [`docs/phase-3-damage-pipeline-architecture.md`](file:///home/capture/Downloads/myglass/docs/phase-3-damage-pipeline-architecture.md).
 - Incremental sub-phases and exit criteria:
 
-| Sub-Phase | Focus | Exit Criteria |
-|---|---|---|
-| **3.1** | **Damage Collection & Telemetry** | Damage rects collected; telemetry tracks damage region counts; **0 rendering changes**. |
-| **3.2** | **Scissor Scaffolding & State** | Scissor bounds active with **100% pixel-identical output** vs baseline. |
-| **3.3** | **Scissored Background Sampling** | Background sampling (`glBlitFramebuffer`) restricted to damage bounds; fill-rate reduced. |
-| **3.4** | **Scissored Gaussian Blur & Padding** | Ping-pong blur passes restricted to padded damage boxes; **0 seams or edge bleed**. |
-| **3.5** | **Scene Generation & Invalidation** | Cache invalidates on all 6 triggers; static backgrounds reuse textures with **0 stale frames**. |
-| **3.6** | **Occlusion Culling & Early-Outs** | Fully transparent/offscreen/occluded surfaces skipped (**0 FBO binds / 0 blurs**). |
+| Sub-Phase | Focus | Functional / Correctness Exit Criteria | Performance Validation Criteria |
+|---|---|---|---|
+| **3.1** | **Damage Collection & Telemetry** | Damage regions match compositor exactly; 0 rendering changes. | Telemetry records damage counts correctly. |
+| **3.2** | **Scissor Scaffolding & State** | 100% pixel-identical output vs baseline (0 seams/artifacts). | Zero measurable CPU/GPU render regression. |
+| **3.3** | **Scissored Background Sampling** | Background sampling (`glBlitFramebuffer`) restricted to damage. | Reduced blit pixel fill workload. |
+| **3.4** | **Scissored Gaussian Blur & Padding** | Ping-pong blur passes restricted to padded damage boxes. | Reduced blur pass pixel fill workload. |
+| **3.5** | **Scene Generation & Invalidation** | Cache invalidates on all 6 triggers; 0 stale frames. | High blur cache hit-rate on static scenes. |
+| **3.6** | **Occlusion Culling & Early-Outs** | Fully transparent/offscreen/occluded surfaces skipped. | Zero FBO binds & zero blurs for hidden elements. |
 
 ### Phase 4 — Blur Texture Cache
 - Cache blurred textures per window/layer surface; invalidate on scene generation bump or transform updates.

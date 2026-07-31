@@ -141,16 +141,16 @@ A window or layer surface pass is **instantly skipped** (0 draw calls, 0 FBO bin
 
 ## 8. Incremental Sub-Phase Roadmap & Exit Criteria
 
-To maintain build stability and allow isolated benchmark verification, Phase 3 is divided into 6 distinct sub-milestones with explicit exit criteria:
+To maintain build stability and allow isolated benchmark verification, Phase 3 is divided into 6 distinct sub-milestones with explicit functional and performance exit criteria:
 
-| Sub-Phase | Focus | Exit Criteria |
-|---|---|---|
-| **3.1** | **Damage Collection & Telemetry** | Damage rectangles collected correctly; telemetry log records damage region counts; **0 rendering or visual changes**. |
-| **3.2** | **Scissor Scaffolding & State Tracking** | Scissor rectangles active with **100% pixel-identical output** compared to baseline (0 visual seams or tile artifacts). |
-| **3.3** | **Scissored Background Sampling** | Background sampling (`sampleBackground` `glBlitFramebuffer`) limited strictly to damaged bounding boxes; benchmark shows reduced blit workload. |
-| **3.4** | **Scissored Gaussian Blur & Padding** | Ping-pong blur passes restricted to padded damage boxes (`padding = ceil(R_base * sqrt(I)) + 4`); **0 visible seams, edge bleed, or pixelation**. |
-| **3.5** | **Scene Generation & Cache Invalidation** | Cache invalidates correctly for all 6 documented triggers; static backgrounds reuse cached textures with **0 stale frames**. |
-| **3.6** | **Occlusion Culling & Early-Outs** | Fully transparent, offscreen, or occluded surfaces skipped completely (**0 FBO binds / 0 blur passes**) without visual regressions. |
+| Sub-Phase | Focus | Functional / Correctness Exit Criteria | Performance Validation Criteria |
+|---|---|---|---|
+| **3.1** | **Damage Collection & Telemetry** | Damage regions collected match compositor exactly; 0 rendering changes. | Telemetry records damage region counts correctly. |
+| **3.2** | **Scissor Scaffolding & State** | 100% pixel-identical output compared to baseline (0 seams/artifacts). | Zero measurable CPU/GPU render regression. |
+| **3.3** | **Scissored Background Sampling** | Background sampling (`glBlitFramebuffer`) limited to damaged bounds. | Reduced blit pixel fill workload. |
+| **3.4** | **Scissored Gaussian Blur & Padding** | Ping-pong blur passes restricted to padded damage boxes; 0 edge bleed. | Reduced blur pass pixel fill workload. |
+| **3.5** | **Scene Generation & Invalidation** | Cache invalidates correctly for all 6 documented triggers; 0 stale frames. | High blur cache hit-rate on static scenes. |
+| **3.6** | **Occlusion Culling & Early-Outs** | Fully transparent, offscreen, or occluded surfaces skipped with 0 regressions. | Zero FBO binds & zero blur passes for hidden/transparent elements. |
 
 ---
 
