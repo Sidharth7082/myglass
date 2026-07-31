@@ -218,9 +218,8 @@ void blurBackground(SP<Render::IFramebuffer> sampleFramebuffer, float radius, in
     // Phase 3.4: Padded scissored Gaussian blur passes
     bool useScissor = false;
     if (pDamageBox && pDamageBox->width > 0 && pDamageBox->height > 0) {
-        // Kernel padding formula with 1.25x safety multiplier and +8px safety margin:
-        // ceil(radius * sqrt(iterations) * 1.25) + 8
-        int pad = static_cast<int>(std::ceil(radius * std::sqrt(static_cast<double>(iterations)) * 1.25)) + 8;
+        // Evidence-driven kernel padding formula: ceil(radius * sqrt(iterations)) + 4
+        int pad = static_cast<int>(std::ceil(radius * std::sqrt(static_cast<double>(iterations)))) + 4;
         int sx0 = std::clamp(static_cast<int>(pDamageBox->x) - pad, 0, width);
         int sy0 = std::clamp(static_cast<int>(pDamageBox->y) - pad, 0, height);
         int sx1 = std::clamp(static_cast<int>(pDamageBox->x + pDamageBox->width) + pad, 0, width);
