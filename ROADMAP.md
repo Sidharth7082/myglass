@@ -144,8 +144,8 @@ graph TD
 
 | Sub-Phase | Focus | Functional / Correctness Exit Criteria | Performance Validation Criteria |
 |---|---|---|---|
-| ⏳ **3.1** | **Damage Collection & Telemetry** | Implementation Complete (Verification Pending: damage regions match compositor; 0 rendering changes). | Telemetry records damage counts, pixel area, union area & union efficiency. |
-| ⏳ **3.2** | **Scissor Scaffolding & State** | Implementation Complete (Verification Pending: no intentional rendering changes; pixel-identical verification pending workload validation). | Zero measurable CPU/GPU render regression. |
+| ⏳ **3.1** | **Damage Collection & Telemetry** | Implementation Complete (Verification Pending: damage regions match compositor; 0 rendering changes). | Telemetry records damage counts, pixel area, union area, union efficiency & blur pixels. |
+| ⏳ **3.2** | **Scissor Scaffolding & State** | Implementation Complete (Verification Pending: no visible rendering differences; no seams, clipping, edge bleed, or artifacts). | Zero measurable CPU/GPU render regression. |
 | ⏳ **3.3** | **Scissored Background Sampling** | Implementation Complete (Verification Pending: background blitting restricted to damage region; 0 visual artifacts). | Reduced blit pixel fill workload & lower GPU sampling latency. |
 | ⏳ **3.4** | **Scissored Gaussian Blur & Padding** | Implementation Complete (Verification Pending: ping-pong blur passes restricted to kernel-padded damage box; 0 blur seams or edge bleed). | Reduced blur pass pixel fill workload & lower GPU shader latency. |
 | **3.5** | **Scene Generation & Invalidation** | Cache invalidates on all 6 triggers; 0 stale frames. | High blur cache hit-rate on static scenes. |
