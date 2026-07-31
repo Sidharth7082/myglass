@@ -30,6 +30,7 @@ struct PerformanceMetrics {
     float    damagedMonitorPct        = 0.0f;
     float    unionEfficiency          = 0.0f;
     float    scissoredBlurCoveragePct = 0.0f;
+    float    blurReductionPct         = 0.0f;
 
     // Memory metrics
     size_t ramBytes  = 0;
@@ -60,6 +61,7 @@ struct PerformanceMetrics {
         damagedMonitorPct        = 0.0f;
         unionEfficiency          = 0.0f;
         scissoredBlurCoveragePct = 0.0f;
+        blurReductionPct         = 0.0f;
         heapAllocations          = 0;
     }
 };

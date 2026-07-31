@@ -201,13 +201,13 @@ void CPerformanceManager::logBenchmarkReport() {
 
     const std::string report = std::format(
         "CPU Frame: {:.2f} ms (P95: {:.2f} ms) | GPU Frame: {:.2f} ms (P95: {:.2f} ms)\n"
-        "Draw Calls: {} | Blur Passes: {} | Blit Fill Est: {} px | Blur Fill Est: {} px (Cov: {:.1f}%)\n"
+        "Draw Calls: {} | Blur Passes: {} | Est Blit Fill: {} px | Est Blur Fill: {} px (Cov: {:.1f}%, Red: {:.1f}%)\n"
         "FBO Binds: {} | FBO Allocs: {} | Shader Binds: {} | Texture Uploads: {} | Uniform Uploads: {}\n"
         "Windows: {} | Layers: {} | Damage Regions: {}\n"
         "Damage Rects: {} | Damaged Pixels: {} | Max Rect: {} px | Union Area: {} px | Union Eff: {:.2f} | Damaged Mon: {:.1f}%\n"
         "VRAM (FBO est.): {:.1f} MB | RAM (RSS est.): {:.1f} MB | Heap Allocs: {}",
         m_metrics.cpuFrameTimeMs, cpuP95, m_metrics.gpuFrameTimeMs, gpuP95,
-        m_metrics.drawCalls, m_metrics.blurPasses, m_metrics.blitPixelsProcessedEst, m_metrics.blurPixelsProcessedEst, m_metrics.scissoredBlurCoveragePct,
+        m_metrics.drawCalls, m_metrics.blurPasses, m_metrics.blitPixelsProcessedEst, m_metrics.blurPixelsProcessedEst, m_metrics.scissoredBlurCoveragePct, m_metrics.blurReductionPct,
         m_metrics.framebufferBinds, m_metrics.framebufferAllocations, m_metrics.shaderBinds, m_metrics.textureUploads, m_metrics.uniformUploads,
         m_metrics.windowsRendered, m_metrics.layersRendered, m_metrics.damageRegions,
         m_metrics.damageRectCount, m_metrics.totalDamagedPixelArea, m_metrics.maxDamageRectArea,

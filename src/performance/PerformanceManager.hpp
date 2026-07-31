@@ -4,6 +4,7 @@
 #include "GpuTimer.hpp"
 #include "PerformanceMetrics.hpp"
 
+#include <algorithm>
 #include <array>
 #include <chrono>
 #include <hyprutils/math/Region.hpp>
@@ -57,6 +58,7 @@ public:
         m_metrics.blurPixelsProcessedEst += count;
         if (fullFramebufferPixels > 0) {
             m_metrics.scissoredBlurCoveragePct = static_cast<float>((static_cast<double>(count) / static_cast<double>(fullFramebufferPixels)) * 100.0);
+            m_metrics.blurReductionPct = std::max(0.0f, 100.0f - m_metrics.scissoredBlurCoveragePct);
         }
     }
     inline void recordFramebufferBind(uint32_t count = 1) noexcept {
