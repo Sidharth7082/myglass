@@ -4,6 +4,24 @@
 
 ---
 
+## 🛡️ Core Principle: Visual Fidelity is Non-Negotiable
+
+**Never trade image quality or correctness for performance. Every optimization must be visually lossless.**
+
+Every optimization must satisfy **BOTH**:
+- ✓ **Pixel-identical output** under all supported workloads (0 blur seams, 0 edge bleed, 0 clipped shadows, 0 flicker, 0 stale textures).
+- ✓ **Measurable CPU and/or GPU improvement**.
+
+If either condition fails, the optimization is rejected or redesigned.
+
+### Optimization Rules
+1. **Rule 1 — Pixel-perfect output**: No blur seams, no edge bleeding, no clipped shadows, no flickering, no stale textures, no animation artifacts.
+2. **Rule 2 — Performance is secondary**: If there is a choice between 5% faster with a tiny artifact vs 0% faster with perfect visuals, **always choose perfect visuals**.
+3. **Rule 3 — Benchmark every change**: Compare visuals across the 5 workload test phases; if quality regresses, revert immediately.
+4. **Rule 4 — Keep escape hatches**: Implement optimizations behind environment flags (`MYGLASS_ENABLE_*`) so they can be toggled independently during testing.
+
+---
+
 ## 🏆 Performance Golden Rules
 
 1. **Measure First**: Never optimize without empirical baseline measurements (`apitrace`, `perf`, `sysprof`).
@@ -14,7 +32,7 @@
 6. **Damage-Only Blur**: Blur only damaged regions; perform zero blur passes on unchanged content.
 7. **Early Culling**: Instantly skip hidden, occluded, zero-opacity, or offscreen window and layer surfaces.
 8. **Minimal GL Shifts**: Minimize OpenGL state changes, shader binds, FBO swaps, and uniform uploads.
-9. **Stable Frame Times**: Optimize for low frame-time jitter and zero stutter rather than peak FPS.
+9. **Stable Frame Times**: Optimize for low frame-time jitter (P95 spikes) and zero stutter rather than peak FPS.
 10. **Maintainable Simplicity**: Prefer simple, maintainable architectures over complex micro-optimizations.
 
 ---
