@@ -7,8 +7,7 @@
 *Make your windows look like shiny frosted liquid glass in seconds!*
 
 [![Build Status](https://img.shields.io/github/actions/workflow/status/Sidharth7082/myglass/build.yml?branch=main&style=for-the-badge&logo=github)](https://github.com/Sidharth7082/myglass/actions/workflows/build.yml)
-[![Release](https://img.shields.io/github/v/release/Sidharth7082/myglass?style=for-the-badge&color=8A2BE2)](https://github.com/Sidharth7082/myglass/releases/latest)
-[![License](https://img.shields.io/github/license/Sidharth7082/myglass?style=for-the-badge&color=brightgreen)](LICENSE)
+[![Configuration Guide](https://img.shields.io/badge/Documentation-Config%20Guide-FF4500?style=for-the-badge&logo=bookstack&logoColor=white)](CONFIG_GUIDE.md)
 
 ---
 
