@@ -128,7 +128,7 @@ graph TD
 |---|---|---|---|
 | ⏳ **3.1** | **Damage Collection & Telemetry** | Implementation Complete (Verification Pending: damage regions match compositor; 0 rendering changes). | Telemetry records damage counts, pixel area, union area & union efficiency. |
 | ⏳ **3.2** | **Scissor Scaffolding & State** | Implementation Complete (Verification Pending: no intentional rendering changes; pixel-identical verification pending workload validation). | Zero measurable CPU/GPU render regression. |
-| **3.3** | **Scissored Background Sampling** | Background sampling (`glBlitFramebuffer`) restricted to damage. | Reduced blit pixel fill workload. |
+| ⏳ **3.3** | **Scissored Background Sampling** | Implementation Complete (Verification Pending: background blitting restricted to damage region; 0 visual artifacts). | Reduced blit pixel fill workload & lower GPU sampling latency. |
 | **3.4** | **Scissored Gaussian Blur & Padding** | Ping-pong blur passes restricted to padded damage boxes. | Reduced blur pass pixel fill workload. |
 | **3.5** | **Scene Generation & Invalidation** | Cache invalidates on all 6 triggers; 0 stale frames. | High blur cache hit-rate on static scenes. |
 | **3.6** | **Occlusion Culling & Early-Outs** | Fully transparent/offscreen/occluded surfaces skipped. | Zero FBO binds & zero blurs for hidden elements. |
