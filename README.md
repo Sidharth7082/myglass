@@ -147,6 +147,20 @@ plugin:myglass {
 }
 ```
 
+### 💡 Neovim & Terminal Setup
+
+To render liquid glass seamlessly behind **Neovim** or terminal applications:
+
+1. Enable background opacity in your terminal (e.g., `background_opacity 0.75` in `~/.config/kitty/kitty.conf`).
+2. Add this snippet to your Neovim config (`~/.config/nvim/init.lua`) to make Neovim's background transparent:
+
+```lua
+-- Force transparent background in Neovim for MyGlass
+for _, group in ipairs({ "Normal", "NormalNC", "LineNr", "SignColumn", "NormalFloat" }) do
+    vim.api.nvim_set_hl(0, group, { bg = "NONE", ctermbg = "NONE" })
+end
+```
+
 ---
 
 ## 🛠️ Manual Building (For Advanced Users)
