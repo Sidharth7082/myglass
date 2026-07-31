@@ -19,7 +19,7 @@ Currently, when a window or layer surface requests glass decoration, background 
 
 ## 2. Mathematical Model & Kernel Padding
 
-Gaussian blur is a spatially extended convolution filter. Sampling a damaged region $D$ without kernel padding causes outer pixels to sample uninitialized GPU memory or black background pixels outside the damage bounds.
+Gaussian blur is a spatially extended convolution filter. Sampling a damaged region `D` without kernel padding causes outer pixels to sample uninitialized GPU memory or black background pixels outside the damage bounds.
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -33,14 +33,15 @@ Gaussian blur is a spatially extended convolution filter. Sampling a damaged reg
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### Padding Equation
-For a given downscale factor $s \in \{1, 2\}$, blur strength $S \in [0.0, 1.0]$, and iteration count $I \in [1, 5]$:
+### Padding Formula
+For a given downscale factor `downscale` (1 or 2), blur strength `blurStrength` (0.0 to 1.0), and iteration count `iterations` (1 to 5):
 
-$$R_{\text{base}} = \frac{S \cdot 12.0}{s}$$
+```text
+R_base  = (blurStrength * 12.0) / downscale
+padding = ceil(R_base * sqrt(iterations)) + 4
+```
 
-$$\text{Padding}_{\text{px}} = \left\lceil R_{\text{base}} \cdot \sqrt{I} \right\rceil + 4$$
-
-Where $+4$ pixels is safety margin for bilinear filtering taps along FBO borders.
+Where `+ 4` pixels is safety margin for bilinear filtering taps along FBO borders.
 
 ---
 
@@ -123,7 +124,7 @@ The cached blur sample for a window/layer MUST be invalidated and re-rendered if
 ## 6. Multi-Monitor & Transform Safety
 
 When monitors are rotated (90°, 180°, 270°):
-- `g_pHyprRenderer->m_renderData.pMonitor->m_transform` swaps $x/y$ coordinates.
+- `g_pHyprRenderer->m_renderData.pMonitor->m_transform` swaps `x/y` coordinates.
 - Scissor boxes and viewport dimensions passed to `g_pHyprOpenGL->setViewport()` MUST match the destination framebuffer's physical orientation, not the un-transformed logical monitor dimensions.
 
 ---
@@ -138,7 +139,38 @@ A window or layer surface pass is **instantly skipped** (0 draw calls, 0 FBO bin
 
 ---
 
-## 8. Telemetry & Verification Protocol
+## 8. Incremental Sub-Phase Roadmap
+
+To maintain build stability and allow isolated benchmark verification, Phase 3 is divided into 6 distinct sub-milestones:
+
+### 3.1 — Damage Collection & Telemetry
+- Capture monitor damage regions (`m_renderData.damage`).
+- Add telemetry tracking for damage region counts and pixel bounds.
+- Zero visual or rendering logic changes.
+
+### 3.2 — Scissor Scaffolding
+- Implement `g_pHyprOpenGL->scissor()` bounds setup.
+- Verify zero visual changes or tile seam regressions.
+
+### 3.3 — Scissored Background Sampling
+- Apply `GL_SCISSOR_TEST` to `sampleBackground` `glBlitFramebuffer`.
+- Benchmark GPU fill-rate reduction on blit passes.
+
+### 3.4 — Scissored Gaussian Blur & Kernel Padding
+- Restrict ping-pong blur passes to padded damage boxes.
+- Verify kernel padding eliminates edge bleed and pixelation.
+
+### 3.5 — Scene Generation & Cache Invalidation Matrix
+- Wire `sceneGeneration` bump tracking per monitor.
+- Re-use cached blur textures on static backgrounds with 100% accurate invalidation on window movement/resize.
+
+### 3.6 — Occlusion Culling & Early-Outs
+- Skip zero-opacity, offscreen, and occluded surfaces.
+- Measure final CPU/GPU frame time improvements.
+
+---
+
+## 9. Telemetry & Verification Protocol
 
 Phase 3 implementation will report the following new metrics via `CPerformanceManager`:
 - `m_metrics.damageRegions`: Number of distinct scissored damage regions processed per frame.

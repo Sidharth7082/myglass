@@ -120,7 +120,13 @@ graph TD
 
 ### Phase 3 — Damage Pipeline Rewrite (Architecture Designed 🚧)
 - Detailed architectural specification created in [`docs/phase-3-damage-pipeline-architecture.md`](file:///home/capture/Downloads/myglass/docs/phase-3-damage-pipeline-architecture.md).
-- Scissor/box bounding-region cropping for background sampling and Gaussian blur passes so only damaged pixels are re-processed.
+- Incremental sub-phases:
+  - **3.1**: Damage Collection & Telemetry
+  - **3.2**: Scissor Scaffolding & State Tracking
+  - **3.3**: Scissored Background Sampling
+  - **3.4**: Scissored Gaussian Blur & Kernel Padding
+  - **3.5**: Scene Generation & Cache Invalidation Matrix
+  - **3.6**: Occlusion Culling & Early-Outs
 
 ### Phase 4 — Blur Texture Cache
 - Cache blurred textures per window/layer surface; invalidate on scene generation bump or transform updates.
