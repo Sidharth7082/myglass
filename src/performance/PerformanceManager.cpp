@@ -201,13 +201,13 @@ void CPerformanceManager::logBenchmarkReport() {
 
     const std::string report = std::format(
         "CPU Frame: {:.2f} ms (P95: {:.2f} ms) | GPU Frame: {:.2f} ms (P95: {:.2f} ms)\n"
-        "Draw Calls: {} | Blur Passes: {} | FBO Binds: {} | FBO Allocs: {}\n"
+        "Draw Calls: {} | Blur Passes: {} | Blur Pixels: {} px | FBO Binds: {} | FBO Allocs: {}\n"
         "Shader Binds: {} | Texture Uploads: {} | Uniform Uploads: {}\n"
         "Windows: {} | Layers: {} | Damage Regions: {}\n"
         "Damage Rects: {} | Damaged Pixels: {} | Max Rect: {} px | Union Area: {} px | Union Eff: {:.2f} | Damaged Mon: {:.1f}%\n"
         "VRAM (FBO est.): {:.1f} MB | RAM (RSS est.): {:.1f} MB | Heap Allocs: {}",
         m_metrics.cpuFrameTimeMs, cpuP95, m_metrics.gpuFrameTimeMs, gpuP95,
-        m_metrics.drawCalls, m_metrics.blurPasses, m_metrics.framebufferBinds, m_metrics.framebufferAllocations,
+        m_metrics.drawCalls, m_metrics.blurPasses, m_metrics.blurPixelsProcessed, m_metrics.framebufferBinds, m_metrics.framebufferAllocations,
         m_metrics.shaderBinds, m_metrics.textureUploads, m_metrics.uniformUploads,
         m_metrics.windowsRendered, m_metrics.layersRendered, m_metrics.damageRegions,
         m_metrics.damageRectCount, m_metrics.totalDamagedPixelArea, m_metrics.maxDamageRectArea,

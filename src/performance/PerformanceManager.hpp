@@ -49,6 +49,9 @@ public:
     inline void recordBlurPass(uint32_t count = 1) noexcept {
         if (m_telemetryEnabled) m_metrics.blurPasses += count;
     }
+    inline void recordBlurPixelsProcessed(size_t count) noexcept {
+        if (m_telemetryEnabled) m_metrics.blurPixelsProcessed += count;
+    }
     inline void recordFramebufferBind(uint32_t count = 1) noexcept {
         if (m_telemetryEnabled) m_metrics.framebufferBinds += count;
     }

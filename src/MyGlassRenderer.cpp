@@ -217,13 +217,14 @@ void blurBackground(SP<Render::IFramebuffer> sampleFramebuffer, float radius, in
 
     // Phase 3.4: Padded scissored Gaussian blur passes
     bool useScissor = false;
+    int sx0 = 0, sy0 = 0, sx1 = 0, sy1 = 0;
     if (pDamageBox && pDamageBox->width > 0 && pDamageBox->height > 0) {
         // Evidence-driven kernel padding formula: ceil(radius * sqrt(iterations)) + 4
         int pad = static_cast<int>(std::ceil(radius * std::sqrt(static_cast<double>(iterations)))) + 4;
-        int sx0 = std::clamp(static_cast<int>(pDamageBox->x) - pad, 0, width);
-        int sy0 = std::clamp(static_cast<int>(pDamageBox->y) - pad, 0, height);
-        int sx1 = std::clamp(static_cast<int>(pDamageBox->x + pDamageBox->width) + pad, 0, width);
-        int sy1 = std::clamp(static_cast<int>(pDamageBox->y + pDamageBox->height) + pad, 0, height);
+        sx0 = std::clamp(static_cast<int>(pDamageBox->x) - pad, 0, width);
+        sy0 = std::clamp(static_cast<int>(pDamageBox->y) - pad, 0, height);
+        sx1 = std::clamp(static_cast<int>(pDamageBox->x + pDamageBox->width) + pad, 0, width);
+        sy1 = std::clamp(static_cast<int>(pDamageBox->y + pDamageBox->height) + pad, 0, height);
 
         if (sx1 > sx0 && sy1 > sy0) {
             useScissor = true;
@@ -246,6 +247,9 @@ void blurBackground(SP<Render::IFramebuffer> sampleFramebuffer, float radius, in
         CPerformanceManager::instance().recordBlurPass(1);
         CPerformanceManager::instance().recordDrawCall(2);
         CPerformanceManager::instance().recordFramebufferBind(2);
+
+        size_t passPixels = useScissor ? (static_cast<size_t>(sx1 - sx0) * static_cast<size_t>(sy1 - sy0)) : (static_cast<size_t>(width) * static_cast<size_t>(height));
+        CPerformanceManager::instance().recordBlurPixelsProcessed(passPixels * 2);
     }
 
     if (useScissor) {
