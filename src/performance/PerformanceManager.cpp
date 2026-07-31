@@ -201,7 +201,7 @@ void CPerformanceManager::logBenchmarkReport() {
 
     const std::string report = std::format(
         "CPU Frame: {:.2f} ms (P95: {:.2f} ms) | GPU Frame: {:.2f} ms (P95: {:.2f} ms)\n"
-        "Draw Calls: {} | Blur Passes: {} | Est Blit Fill: {} px | Est Blur Fill: {} px (Cov: {:.1f}%, Red: {:.1f}%)\n"
+        "Draw Calls: {} | Blur Passes: {} | Est Blit Fill: {} px | Est Blur Fill: {} px (Cov: {:.1f}%, Saved: {:.1f}%)\n"
         "FBO Binds: {} | FBO Allocs: {} | Shader Binds: {} | Texture Uploads: {} | Uniform Uploads: {}\n"
         "Windows: {} | Layers: {} | Damage Regions: {}\n"
         "Damage Rects: {} | Damaged Pixels: {} | Max Rect: {} px | Union Area: {} px | Union Eff: {:.2f} | Damaged Mon: {:.1f}%\n"
