@@ -151,6 +151,8 @@ graph TD
 | **3.5** | **Scene Generation & Invalidation** | Cache invalidates on all 6 triggers; 0 stale frames. | High blur cache hit-rate on static scenes. |
 | **3.6** | **Occlusion Culling & Early-Outs** | Fully transparent/offscreen/occluded surfaces skipped. | Zero FBO binds & zero blurs for hidden elements. |
 
+> **Note**: Phase 3.5 remains **locked** until all 11 items in the [Phase 3 Promotion Gate Checklist](file:///home/capture/.gemini/antigravity-cli/brain/c4a8ead4-5c22-4c45-8d5f-bccc34eacca3/phase-3-damage-pipeline-verification.md) are satisfied and archived to `benchmark-baseline/` (including `environment.txt`).
+
 ### Phase 4 — Blur Texture Cache
 - Cache blurred textures per window/layer surface; invalidate on scene generation bump or transform updates.
 
