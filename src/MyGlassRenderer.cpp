@@ -1,6 +1,7 @@
 #include "MyGlassRenderer.hpp"
 #include "BuiltInPresets.hpp"
 #include "Globals.hpp"
+#include "performance/PerformanceManager.hpp"
 
 #include <array>
 #include <GLES3/gl32.h>
@@ -14,6 +15,8 @@ static GLuint fbId(const SP<Render::IFramebuffer>& framebuffer) {
 }
 
 static void uploadThemeUniforms(const SResolveContext& ctx) {
+    CPerformanceManager::instance().recordUniformUpload(7);
+
     const auto& uniforms = g_pGlobalState->shaderManager.glassUniforms;
     const auto& glassShader = g_pGlobalState->shaderManager.glassShader;
     const auto& defaults = ctx.isDark ? DARK_THEME_DEFAULTS : LIGHT_THEME_DEFAULTS;
@@ -44,8 +47,10 @@ void sampleBackground(SP<Render::IFramebuffer>& sampleFramebuffer, SP<Render::IF
     if (!sampleFramebuffer)
         sampleFramebuffer = g_pHyprRenderer->createFB("myglass-sample");
 
-    if (sampleFramebuffer->m_size.x != sampleWidth || sampleFramebuffer->m_size.y != sampleHeight)
+    if (sampleFramebuffer->m_size.x != sampleWidth || sampleFramebuffer->m_size.y != sampleHeight) {
         sampleFramebuffer->alloc(sampleWidth, sampleHeight, sourceFramebuffer->m_drmFormat);
+        CPerformanceManager::instance().recordFramebufferAllocation(sampleWidth * sampleHeight * 4);
+    }
 
     int srcX0 = static_cast<int>(box.x) - pad;
     int srcX1 = static_cast<int>(box.x + box.width) + pad;
@@ -90,6 +95,9 @@ void sampleBackground(SP<Render::IFramebuffer>& sampleFramebuffer, SP<Render::IF
     glBlitFramebuffer(srcX0, srcY0, srcX1, srcY1,
                       dstX0, dstY0, dstX1, dstY1,
                       GL_COLOR_BUFFER_BIT, GL_LINEAR);
+
+    CPerformanceManager::instance().recordFramebufferBind(3);
+    CPerformanceManager::instance().recordDrawCall(1);
 }
 
 void blurBackground(SP<Render::IFramebuffer> sampleFramebuffer, float radius, int iterations,
@@ -105,8 +113,10 @@ void blurBackground(SP<Render::IFramebuffer> sampleFramebuffer, float radius, in
     if (!blurTempFramebuffer)
         blurTempFramebuffer = g_pHyprRenderer->createFB("myglass-blur-temp");
 
-    if (blurTempFramebuffer->m_size.x != width || blurTempFramebuffer->m_size.y != height)
+    if (blurTempFramebuffer->m_size.x != width || blurTempFramebuffer->m_size.y != height) {
         blurTempFramebuffer->alloc(width, height, sampleFramebuffer->m_drmFormat);
+        CPerformanceManager::instance().recordFramebufferAllocation(width * height * 4);
+    }
 
     // Fullscreen quad projection: maps VAO positions [0,1] to clip space [-1,1]
     static constexpr std::array<float, 9> FULLSCREEN_PROJECTION = {
@@ -118,6 +128,9 @@ void blurBackground(SP<Render::IFramebuffer> sampleFramebuffer, float radius, in
     const auto& blurUniforms = shaderManager.blurUniforms;
 
     auto shader = g_pHyprOpenGL->useShader(shaderManager.blurShader);
+    CPerformanceManager::instance().recordShaderBind(1);
+    CPerformanceManager::instance().recordUniformUpload(3);
+
     shader->setUniformMatrix3fv(SHADER_PROJ, 1, GL_FALSE, FULLSCREEN_PROJECTION);
     shader->setUniformInt(SHADER_TEX, 0);
     glUniform1f(blurUniforms.radius, radius);
@@ -138,6 +151,11 @@ void blurBackground(SP<Render::IFramebuffer> sampleFramebuffer, float radius, in
         blurTempFramebuffer->getTexture()->bind();
         glUniform2f(blurUniforms.direction, 0.0f, 1.0f / height);
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+        CPerformanceManager::instance().recordBlurPass(1);
+        CPerformanceManager::instance().recordDrawCall(2);
+        CPerformanceManager::instance().recordFramebufferBind(2);
+        CPerformanceManager::instance().recordUniformUpload(2);
     }
 
     // Restore caller's GL state without querying (avoids pipeline stalls).
@@ -145,6 +163,8 @@ void blurBackground(SP<Render::IFramebuffer> sampleFramebuffer, float radius, in
     // sizes are wrong here on 90°/270° monitors, where m_transformedSize is
     // swapped relative to the framebuffer's native orientation (#41).
     glBindFramebuffer(GL_FRAMEBUFFER, fbId(callerFramebuffer));
+    CPerformanceManager::instance().recordFramebufferBind(1);
+
     glBindVertexArray(0);
     g_pHyprOpenGL->setViewport(0, 0,
         static_cast<int>(callerFramebuffer->m_size.x),
@@ -171,6 +191,8 @@ void applyGlassEffect(SP<Render::IFramebuffer> sampleFramebuffer, SP<Render::IFr
     glMatrix.transpose();
 
     glBindFramebuffer(GL_FRAMEBUFFER, fbId(targetFramebuffer));
+    CPerformanceManager::instance().recordFramebufferBind(1);
+
     glActiveTexture(GL_TEXTURE0);
     texture->bind();
 
@@ -184,6 +206,7 @@ void applyGlassEffect(SP<Render::IFramebuffer> sampleFramebuffer, SP<Render::IFr
     }
 
     auto shader = g_pHyprOpenGL->useShader(shaderManager.glassShader);
+    CPerformanceManager::instance().recordShaderBind(1);
 
     shader->setUniformMatrix3fv(SHADER_PROJ, 1, GL_FALSE, glMatrix.getMatrix());
     shader->setUniformInt(SHADER_TEX, 0);
@@ -226,18 +249,24 @@ void applyGlassEffect(SP<Render::IFramebuffer> sampleFramebuffer, SP<Render::IFr
             static_cast<float>(mask->uvScale.x),
             static_cast<float>(mask->uvScale.y));
         glUniform1f(uniforms.maskAlphaThreshold, mask->alphaThreshold);
+        CPerformanceManager::instance().recordUniformUpload(5);
     } else {
         glUniform1i(uniforms.useMask, 0);
         glUniform1f(uniforms.maskAlphaThreshold, 0.001f);
+        CPerformanceManager::instance().recordUniformUpload(2);
     }
 
     shader->setUniformFloat(SHADER_RADIUS, cornerRadius);
     shader->setUniformFloat(SHADER_ROUNDING_POWER, roundingPower);
+    CPerformanceManager::instance().recordUniformUpload(13);
 
     glBindVertexArray(shader->getUniformLocation(SHADER_SHADER_VAO));
     g_pHyprOpenGL->scissor(rawBox);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     g_pHyprOpenGL->scissor(nullptr);
+
+    CPerformanceManager::instance().recordDrawCall(1);
 }
 
 } // namespace GlassRenderer
+

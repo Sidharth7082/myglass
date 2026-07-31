@@ -5,6 +5,7 @@
 #include "MyGlassRenderer.hpp"
 #include "Globals.hpp"
 #include "PluginConfig.hpp"
+#include "performance/PerformanceManager.hpp"
 
 #include <hyprland/src/Compositor.hpp>
 #include <hyprland/src/desktop/view/LayerSurface.hpp>
@@ -151,6 +152,10 @@ static void hkRenderLayer(Render::IHyprRenderer* thisptr, PHLLS layerSurface, PH
 
     // Only inject glass on the main surface pass, not popups
     if (!popups && config.layersEnabled && **config.layersEnabled && shouldGlassLayer(layerSurface)) {
+        CPerformanceManager::instance().beginFrame();
+        CPerformanceManager::instance().recordLayerRendered(1);
+        CPerformanceManager::instance().recordDamageRegion(1);
+
         // Lazy-create per-layer state, replacing stale entries whose weak ref died
         // (can happen when a new CLayerSurface is allocated at the same address)
         auto* rawPtr = layerSurface.get();
@@ -164,12 +169,14 @@ static void hkRenderLayer(Render::IHyprRenderer* thisptr, PHLLS layerSurface, PH
 
         if (!layerSurface->m_mapped) {
             ((renderLayerFn)g_pGlobalState->renderLayerHook->m_original)(thisptr, layerSurface, monitor, now, popups, lockscreen);
+            CPerformanceManager::instance().endFrame();
             return;
         }
 
         float alpha = layerSurface->alpha().getTotal();
         if (alpha < 0.001f) {
             ((renderLayerFn)g_pGlobalState->renderLayerHook->m_original)(thisptr, layerSurface, monitor, now, popups, lockscreen);
+            CPerformanceManager::instance().endFrame();
             return;
         }
 
@@ -185,6 +192,7 @@ static void hkRenderLayer(Render::IHyprRenderer* thisptr, PHLLS layerSurface, PH
         g_pHyprRenderer->m_renderPass.add(makeUnique<CGlassLayerCompositeElement>(postData));
 
         it->second->damageIfMoved();
+        CPerformanceManager::instance().endFrame();
         return;
     }
 

@@ -21,7 +21,11 @@ SOURCES = \
 	src/GlassLayerPassElement.cpp \
 	src/GlassLayerCompositeElement.cpp \
 	src/PluginConfig.cpp \
-	src/ShaderManager.cpp
+	src/ShaderManager.cpp \
+	src/performance/CpuTimer.cpp \
+	src/performance/GpuTimer.cpp \
+	src/performance/PerformanceManager.cpp
+
 
 OBJ = $(SOURCES:.cpp=.o)
 
