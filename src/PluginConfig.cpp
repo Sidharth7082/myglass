@@ -32,12 +32,7 @@ static int handleLuaPreset(lua_State* L);
 static int handleLuaLayer(lua_State* L);
 static int handleLuaConfig(lua_State* L);
 
-#include <hyprland/src/debug/log/Logger.hpp>
-
 void registerConfig(HANDLE handle) {
-    auto cfgType = Config::mgr() ? Config::mgr()->type() : static_cast<Config::eConfigManagerType>(99);
-    Log::logger->log(Hyprutils::CLI::LOG_TRACE, "[myglass] Entering registerConfig(), Config type = {} ({})", (int)cfgType, Config::typeToString(cfgType));
-
     addConfigValue<Config::Values::Int>(handle, ConfigKeys::ENABLED, Config::INTEGER{1});
     addConfigValue<Config::Values::Int>(handle, ConfigKeys::MANAGE_WINDOW_BLUR, Config::INTEGER{1});
     addConfigValue<Config::Values::String>(handle, ConfigKeys::DEFAULT_THEME, Config::STRING{"dark"});
@@ -115,19 +110,9 @@ void registerConfig(HANDLE handle) {
     HyprlandAPI::addConfigKeyword(handle, ConfigKeys::PRESET_KEYWORD, handlePresetKeyword, Hyprlang::SHandlerOptions{});
 #pragma GCC diagnostic pop
 
-    const bool resPreset = HyprlandAPI::addLuaFunction(handle, "myglass", "preset", handleLuaPreset);
-    const bool resLayer  = HyprlandAPI::addLuaFunction(handle, "myglass", "layer", handleLuaLayer);
-    const bool resConfig = HyprlandAPI::addLuaFunction(handle, "myglass", "config", handleLuaConfig);
-
-    Log::logger->log(Hyprutils::CLI::LOG_TRACE, "[myglass] addLuaFunction('myglass', 'preset') = {}", resPreset);
-    Log::logger->log(Hyprutils::CLI::LOG_TRACE, "[myglass] addLuaFunction('myglass', 'layer')  = {}", resLayer);
-    Log::logger->log(Hyprutils::CLI::LOG_TRACE, "[myglass] addLuaFunction('myglass', 'config') = {}", resConfig);
-
-    HyprlandAPI::addNotificationV2(handle, {
-        {"text", std::format("[myglass] addLuaFunction: preset={}, layer={}, config={}", resPreset, resLayer, resConfig)},
-        {"time", (uint64_t)8000},
-        {"color", CHyprColor{0.2, 0.8, 1.0, 1.0}},
-    });
+    HyprlandAPI::addLuaFunction(handle, "myglass", "preset", handleLuaPreset);
+    HyprlandAPI::addLuaFunction(handle, "myglass", "layer", handleLuaLayer);
+    HyprlandAPI::addLuaFunction(handle, "myglass", "config", handleLuaConfig);
 }
 
 // ── Config pointer initialization ────────────────────────────────────────────
