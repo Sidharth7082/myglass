@@ -96,8 +96,17 @@ hyprctl dispatch tagwindow +myglass_preset_high_contrast
 
 ## 🔄 Auto-Load On Every Startup
 
-To keep MyGlass active every time you turn on your computer, open your `~/.config/hypr/hyprland.conf` file and add this single line at the bottom:
+To keep MyGlass automatically active every time Hyprland starts:
 
+### 📜 Lua Configuration (`autostart.lua`)
+Add `hl.exec_cmd("hyprpm reload -n")` inside your autostart handler:
+```lua
+hl.on("hyprland.start", function ()
+    hl.exec_cmd("hyprpm reload -n")
+end)
+```
+
+### 📝 Legacy Config (`hyprland.conf`)
 ```ini
 exec-once = hyprpm reload -n
 ```
