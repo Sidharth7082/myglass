@@ -133,6 +133,9 @@ if hl.plugin and hl.plugin.myglass then
     -- Add glass effect to Waybar top bar
     hg.layer("waybar", { preset = "subtle" })
 
+    -- Add glass effect to Dynamic Island
+    hg.layer("nowoward-capdynamic", { preset = "clear" })
+
     -- Add glass effect to SwayNC notifications
     hg.layer("swaync")
 end
@@ -149,7 +152,7 @@ plugin:myglass {
 
     layers {
         enabled = 1
-        namespaces = waybar, swaync
+        namespaces = waybar, swaync, nowoward-capdynamic
         preset = subtle
     }
 }

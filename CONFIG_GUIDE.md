@@ -171,6 +171,11 @@ hg.layer("waybar", {
 -- Enable glass for SwayNC notifications
 hg.layer("swaync")
 
+-- Custom glass for Dynamic Island
+hg.layer("nowoward-capdynamic", {
+    preset = "clear",
+})
+
 -- Custom glass for Quickshell panels
 hg.layer("quickshell:bezel", {
     preset = "clear",
