@@ -150,7 +150,8 @@ static void hkRenderLayer(Render::IHyprRenderer* thisptr, PHLLS layerSurface, PH
     });
 
     // Only inject glass on the main surface pass, not popups
-    if (!popups && config.layersEnabled && **config.layersEnabled && shouldGlassLayer(layerSurface)) {
+    const bool layersOn = (config.layersEnabled && *config.layersEnabled != 0) || !g_pGlobalState->layerNamespaceFilter.empty();
+    if (!popups && layersOn && shouldGlassLayer(layerSurface)) {
         // Lazy-create per-layer state, replacing stale entries whose weak ref died
         // (can happen when a new CLayerSurface is allocated at the same address)
         auto* rawPtr = layerSurface.get();
