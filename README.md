@@ -61,7 +61,7 @@ hyprctl reload
 
 | 🖥️ Desktop | 📊 Waybar Surface |
 | :---: | :---: |
-| ![Desktop](assets/desktop.png) | ![Waybar](assets/waybar.png) |
+| ![Desktop](assets/desktop.png) | ![Waybar](assets/ternimal.png) |
 
 </div>
 
