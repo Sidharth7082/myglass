@@ -63,13 +63,17 @@ hyprctl reload
 | :---: | :---: |
 | ![Desktop](assets/desktop.png) | ![Waybar](assets/waybarimg.png) |
 
+| 🚪 WLogout Overlay (MyGlass Mode) | 🚪 WLogout Overlay (Default Mode) |
+| :---: | :---: |
+| ![WLogout Glass Mode](assets/wlogout_glass.png) | ![WLogout Default Mode](assets/wlogout_default.png) |
+
 </div>
 
 ---
 
 ## 🎮 How to Use It (Fun Commands)
 
-Want to turn glass on or off for a specific window? Copy & paste these into your terminal!
+Want to turn glass on or off for a specific window or toggle modes live? Copy & paste these into your terminal!
 
 ### 🚫 Turn glass OFF on the current window:
 ```bash
@@ -116,28 +120,43 @@ exec-once = hyprpm reload -n
 
 Copy and paste this config snippet into your Hyprland configuration file to customize the look!
 
-### 📜 Lua Configuration (`hyprland.lua`)
+### 📜 Lua Configuration (`module/myglass.lua` / `hyprland.lua`)
 
 ```lua
+local state_file = (os.getenv("HOME") or "/home/capture") .. "/.config/hypr/myglass_enabled.state"
+local f = io.open(state_file, "r")
+local enabled_state = true
+if f then
+    local content = f:read("*all")
+    f:close()
+    if content and content:find("false") then
+        enabled_state = false
+    end
+end
+
 if hl.plugin and hl.plugin.myglass then
     local hg = hl.plugin.myglass
 
     -- Main Settings
     hg.config({
+        enabled = enabled_state,
         default_theme = "dark",      -- "dark" or "light"
         default_preset = "clear",     -- Glass style
-        tint_color = 0x8899aa22,      -- Glass tint color
-        brightness = 0.9,             -- Overall brightness
+        tint_color = 0x00000000,      -- Clear glass tint
+        glass_opacity = 0.09,         -- Transparency opacity
+        blur_strength = 0.04,         -- Background blur strength
     })
 
-    -- Add glass effect to Waybar top bar
-    hg.layer("waybar", { preset = "subtle" })
+    if enabled_state then
+        -- Add liquid glass effect to Dynamic Island layer surfaces
+        hg.layer("nowoward-capdynamic", { preset = "clear" })
+        hg.layer("nowoward-capdynamic-wallpaperpicker", { preset = "clear" })
+        hg.layer("nowoward-capdynamic-wlogout", { preset = "clear" })
 
-    -- Add glass effect to Dynamic Island
-    hg.layer("nowoward-capdynamic", { preset = "clear" })
-
-    -- Add glass effect to SwayNC notifications
-    hg.layer("swaync")
+        -- Add liquid glass effect to Waybar & SwayNC
+        hg.layer("waybar", { preset = "subtle" })
+        hg.layer("swaync")
+    end
 end
 ```
 
@@ -147,13 +166,14 @@ end
 plugin:myglass {
     default_theme = dark
     default_preset = clear
-    tint_color = 0x8899aa22
-    brightness = 0.9
+    tint_color = 0x00000000
+    glass_opacity = 0.09
+    blur_strength = 0.04
 
     layers {
         enabled = 1
-        namespaces = waybar, swaync, nowoward-capdynamic
-        preset = subtle
+        namespaces = waybar, swaync, nowoward-capdynamic, nowoward-capdynamic-wallpaperpicker, nowoward-capdynamic-wlogout
+        preset = clear
     }
 }
 ```
