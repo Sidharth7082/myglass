@@ -63,9 +63,9 @@ hyprctl reload
 | :---: | :---: |
 | ![Desktop](assets/desktop.png) | ![Waybar](assets/waybarimg.png) |
 
-| 🚪 WLogout Overlay (MyGlass Mode) | 🚪 WLogout Overlay (Default Mode) |
+| 📈 btop System Monitor (Liquid Glass) | 🚪 WLogout Overlay (MyGlass Mode) |
 | :---: | :---: |
-| ![WLogout Glass Mode](assets/wlogout_glass.png) | ![WLogout Default Mode](assets/wlogout_default.png) |
+| ![btop Glass](assets/btop.png) | ![WLogout Glass Mode](assets/wlogout_glass.png) |
 
 </div>
 
@@ -178,12 +178,23 @@ plugin:myglass {
 }
 ```
 
-### 💡 Neovim & Terminal Setup
+### 💡 Neovim, btop & Terminal Setup
 
-To render liquid glass seamlessly behind **Neovim** or terminal applications:
+To render liquid glass seamlessly behind **Neovim**, **btop**, or terminal applications:
 
 1. Enable background opacity in your terminal (e.g., `background_opacity 0.75` in `~/.config/kitty/kitty.conf`).
-2. Add this snippet to your Neovim config (`~/.config/nvim/init.lua`) to make Neovim's background transparent:
+
+2. **btop System Monitor Glass Setup**:
+   Disable `theme_background` in `~/.config/btop/btop.conf` so `btop` does not render a solid background:
+   ```ini
+   color_theme = "tokyo-night"  # or high-contrast theme
+   theme_background = false
+   truecolor = true
+   ```
+   *Tip for high text contrast over transparent wallpaper*: Create a theme file `~/.config/btop/themes/high-contrast-glass.theme` with `#ffffff` foreground colors for ultra-sharp text readability.
+
+3. **Neovim Setup**:
+   Add this snippet to your Neovim config (`~/.config/nvim/init.lua`) to make Neovim's background transparent:
 
 ```lua
 -- Force transparent background in Neovim for MyGlass
