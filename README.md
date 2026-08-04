@@ -85,9 +85,24 @@ hyprctl dispatch tagwindow +myglass_disabled
 hyprctl dispatch tagwindow +myglass_enabled
 ```
 
+### 💎 Change style to "Clear Glass" (Recommended Default):
+```bash
+hyprctl dispatch tagwindow +myglass_preset_clear
+```
+
+### 💻 Change style to "Terminal Glass" (For btop & Terminals):
+```bash
+hyprctl dispatch tagwindow +myglass_preset_terminal_glass
+```
+
 ### 🎨 Change style to "Subtle Glass":
 ```bash
 hyprctl dispatch tagwindow +myglass_preset_subtle
+```
+
+### ❄️ Change style to "Acrylic Glass":
+```bash
+hyprctl dispatch tagwindow +myglass_preset_acrylic
 ```
 
 ### ⚡ Change style to "High Contrast Glass":
@@ -96,6 +111,16 @@ hyprctl dispatch tagwindow +myglass_preset_high_contrast
 ```
 
 ---
+
+## 🎨 Available Presets Overview
+
+| Preset | Character & Style | Best Used For | Command |
+|---|---|---|---|
+| 💎 **`clear`** *(Recommended)* | Crystal clear see-through glass with zero blur distortion. | Wallpaper transparency, aesthetic desktop setups. | `hyprctl dispatch tagwindow +myglass_preset_clear` |
+| 💻 **`terminal_glass`** | High text contrast with low distortion & crisp text. | Terminal windows, `btop`, Neovim, code editors. | `hyprctl dispatch tagwindow +myglass_preset_terminal_glass` |
+| 🎨 **`subtle`** | Gentle background blur (`1.0`) with soft edge glint. | Daily app windows, file managers. | `hyprctl dispatch tagwindow +myglass_preset_subtle` |
+| ❄️ **`acrylic`** | Heavy Windows-style acrylic frosted diffusion (`3.5` blur). | Floating panels, popups, sidebars. | `hyprctl dispatch tagwindow +myglass_preset_acrylic` |
+| ⚡ **`high_contrast`** | Enhanced contrast multiplier & adaptive dimming. | Bright wallpapers & white themes. | `hyprctl dispatch tagwindow +myglass_preset_high_contrast` |
 
 ## 🔄 Auto-Load On Every Startup
 
