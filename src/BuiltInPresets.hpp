@@ -125,6 +125,38 @@ inline SCustomPreset makeGlass() {
     return p;
 }
 
+inline SCustomPreset makeTerminalGlass() {
+    SCustomPreset p;
+    p.name = "terminal_glass";
+
+    p.shared.blurStrength        = 0.06f;
+    p.shared.refractionStrength  = 0.3f;
+    p.shared.chromaticAberration = 0.15f;
+    p.shared.fresnelStrength     = 0.2f;
+    p.shared.specularStrength    = 0.3f;
+    p.shared.glassOpacity        = 0.05f;
+    p.shared.tintColor           = 0x22100820;
+
+    return p;
+}
+
+inline SCustomPreset makeAcrylic() {
+    SCustomPreset p;
+    p.name = "acrylic";
+
+    p.shared.blurStrength        = 3.5f;
+    p.shared.blurIterations      = 4;
+    p.shared.lensDistortion      = 0.2f;
+    p.shared.refractionStrength  = 0.8f;
+    p.shared.chromaticAberration = 0.2f;
+    p.shared.fresnelStrength     = 0.5f;
+    p.shared.specularStrength    = 0.6f;
+    p.shared.glassOpacity        = 0.85f;
+    p.shared.tintColor           = 0x33101525;
+
+    return p;
+}
+
 inline std::unordered_map<std::string, SCustomPreset> getAll() {
     std::unordered_map<std::string, SCustomPreset> presets;
 
@@ -134,6 +166,8 @@ inline std::unordered_map<std::string, SCustomPreset> getAll() {
     add(makeSubtle());
     add(makeClear());
     add(makeGlass());
+    add(makeTerminalGlass());
+    add(makeAcrylic());
 
     return presets;
 }
