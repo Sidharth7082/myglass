@@ -1,4 +1,12 @@
 
+## [v1.2.0] - 2026-08-04
+
+### Features & Design System
+* **Pavucontrol Smoked Glass HUD Theme**: 1-click installer and GTK4 CSS theme for `pavucontrol` (`curl -fsSL ... | bash`).
+* **New Built-in Presets**: Added `terminal_glass` and `acrylic` built-in presets in `BuiltInPresets.hpp`.
+* **BTOP System Monitor Integration**: Full documentation & high-contrast liquid glass theme configuration for `btop`.
+* **Preset Switching State File**: Native `~/.config/hypr/myglass_preset.state` support with `clear`, `terminal_glass`, `acrylic`, `subtle`, and `high_contrast` presets.
+
 ## [v1.1.0] - 2026-07-31
 
 ### Features & Refactoring

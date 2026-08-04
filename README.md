@@ -63,11 +63,24 @@ hyprctl reload
 | :---: | :---: |
 | ![Desktop](assets/desktop.png) | ![Waybar](assets/waybarimg.png) |
 
-| 📈 btop System Monitor (Liquid Glass) | 🚪 WLogout Overlay (MyGlass Mode) |
+| 📈 btop System Monitor (Liquid Glass) | 🎛️ Pavucontrol (Smoked Glass HUD) |
 | :---: | :---: |
-| ![btop Glass](assets/btop.png) | ![WLogout Glass Mode](assets/wlogout_glass.png) |
+| ![btop Glass](assets/btop.png) | ![Pavucontrol HUD](assets/pavucontrol_hud.png) |
 
 </div>
+
+---
+
+## 🎛️ Pavucontrol (Smoked Glass HUD Theme)
+
+Give your **Pavucontrol** volume manager a futuristic **Smoked Glass HUD** interface that matches your terminal and desktop wallpaper!
+
+### ⚡ 1-Click Installation Command
+Run this single command in your terminal to automatically install the GTK theme and Hyprland glass transparency rules:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Sidharth7082/myglass/main/themes/pavucontrol/install.sh | bash
+```
 
 ---
 

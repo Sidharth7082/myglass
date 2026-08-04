@@ -1,0 +1,183 @@
+/* =============================================================================
+ *  MyGlass Core Design System - "Smoked Glass HUD" Specification
+ *  Principle: "Transparency is default. Contrast appears only on interaction."
+ * ============================================================================= */
+
+/* ── 1. Window Shell & Minimal Reset ─────────────────────────────────────────── */
+window,
+.background,
+notebook,
+notebook > stack,
+scrolledwindow,
+scrolledwindow > viewport,
+listbox {
+    background-color: transparent;
+    background-image: none;
+    border: none;
+    box-shadow: none;
+}
+
+/* JetBrains Mono Typography */
+* {
+    font-family: "JetBrainsMono Nerd Font", "JetBrains Mono", monospace;
+    font-size: 10pt;
+}
+
+/* ── 2. Wireframe Device Section (Smoked Glass Base) ────────────────────────── */
+listbox > row {
+    background-color: rgba(20, 20, 20, 0.22); /* Smoked Glass Fill */
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 12px;
+    margin: 12px 6px;
+    padding: 14px;
+    box-shadow: none;
+}
+
+/* Interactive Hover State: Faint Border Glow & Slightly Darker Glass */
+listbox > row:hover {
+    background-color: rgba(15, 22, 32, 0.35);
+    border-color: rgba(51, 204, 255, 0.50);
+}
+
+/* ── 3. Smoked Glass Dropdown Selectors (Port & Footer) ─────────────────────── */
+dropdown > button,
+combobox > button {
+    background-color: rgba(20, 20, 20, 0.22); /* Smoked Glass Fill */
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    padding: 6px 12px;
+    margin-top: 4px;
+    margin-bottom: 8px;
+    color: #ffffff;
+}
+
+dropdown > button:hover,
+combobox > button:hover {
+    background-color: rgba(30, 40, 55, 0.40);
+    border-color: #33ccff;
+}
+
+/* ── 4. Capsule Tabs (Smoked Glass Inactive / Cyan Outline Active) ───────────── */
+notebook > header {
+    background-color: transparent;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    padding: 6px 8px;
+    margin-bottom: 14px;
+}
+
+notebook > header > tabs > tab {
+    background-color: rgba(20, 20, 20, 0.22);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 18px;
+    padding: 6px 16px;
+    margin: 0 4px;
+    color: rgba(255, 255, 255, 0.65);
+    font-weight: 600;
+}
+
+notebook > header > tabs > tab:hover {
+    background-color: rgba(255, 255, 255, 0.14);
+    border-color: rgba(255, 255, 255, 0.35);
+    color: #ffffff;
+}
+
+notebook > header > tabs > tab:checked {
+    background-color: rgba(51, 204, 255, 0.25);
+    border: 2px solid #33ccff;
+    color: #ffffff;
+    font-weight: 700;
+    box-shadow: 0 0 10px rgba(51, 204, 255, 0.35);
+}
+
+/* ── 5. BTOP Typography Hierarchy & High-Contrast Labels ────────────────────── */
+/* Primary Device Title */
+listbox > row box > box > label:first-child,
+listbox > row grid > label:first-child {
+    font-size: 11pt;
+    font-weight: 700;
+    color: #ffffff;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.95);
+    margin-bottom: 8px;
+}
+
+/* Port Labels */
+listbox > row label {
+    color: rgba(255, 255, 255, 0.90);
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.90);
+}
+
+/* Volume DB / Percentage (Dim Text) */
+listbox > row label.dim-label,
+listbox > row label:disabled {
+    color: rgba(200, 220, 240, 0.60);
+    font-size: 9pt;
+}
+
+/* ── 6. Sliders (Cyan Active Fill / Gray Track / Glowing White Knob) ────────── */
+scale {
+    margin-top: 10px;
+    margin-bottom: 12px;
+}
+
+scale > trough {
+    background-color: rgba(255, 255, 255, 0.15);
+    border-radius: 6px;
+    min-height: 6px;
+}
+
+scale > trough > highlight {
+    background-color: #33ccff;
+    border-radius: 6px;
+}
+
+scale > trough > slider {
+    background-color: #ffffff;
+    border: 2px solid #33ccff;
+    border-radius: 50%;
+    min-width: 16px;
+    min-height: 16px;
+    margin: 0px;
+}
+
+/* ── 7. Interactive Action Buttons (Mute, Lock, Active) ─────────────────────── */
+listbox > row button {
+    background-color: rgba(20, 20, 20, 0.30);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 8px;
+    min-width: 30px;
+    min-height: 30px;
+    padding: 4px;
+    margin: 0 3px;
+}
+
+listbox > row button:hover {
+    background-color: rgba(51, 204, 255, 0.25);
+    border-color: #33ccff;
+}
+
+/* ── 8. Calmer Expander & Wireframe Footer ───────────────────────────────────── */
+expander > title {
+    background-color: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    padding: 6px 12px;
+    color: rgba(255, 255, 255, 0.65);
+    font-weight: 600;
+}
+
+expander > title:hover {
+    border-color: rgba(51, 204, 255, 0.50);
+    color: #ffffff;
+}
+
+window > box > box:last-child {
+    background-color: transparent;
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
+    padding: 12px 16px;
+    margin-top: 12px;
+}
+
+/* Icons */
+image {
+    color: #ffffff;
+}
