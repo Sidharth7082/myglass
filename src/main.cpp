@@ -36,7 +36,7 @@ static void clearLayerGlassOnClose(PHLLS layerSurface) {
 
 static void onNewWindow(PHLWINDOW window) {
     if (std::ranges::any_of(window->m_windowDecorations,
-                            [](const auto& decoration) {return decoration->getDisplayName() == "MyGlass"; }))
+                            [](const auto& decoration) {return decoration->getDisplayName() == DECORATION_DISPLAY_NAME; }))
         return;
 
     auto decoration = makeUnique<CGlassDecoration>(window);

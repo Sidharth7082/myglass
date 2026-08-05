@@ -9,6 +9,11 @@
 
 inline constexpr std::string_view CONFIG_PREFIX = "plugin:myglass:";
 
+// Single source of truth for the decoration's display name. Used both by
+// CGlassDecoration::getDisplayName() and by the duplicate-guard in onNewWindow().
+// Keep these in sync via this constant so a re-add can't slip through again.
+inline constexpr std::string_view DECORATION_DISPLAY_NAME = "MyGlass";
+
 // Window tags for theme and preset selection
 inline constexpr std::string_view TAG_THEME_PREFIX  = "myglass_theme_";
 inline constexpr std::string_view TAG_PRESET_PREFIX = "myglass_preset_";

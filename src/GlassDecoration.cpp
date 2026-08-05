@@ -286,5 +286,5 @@ uint64_t CGlassDecoration::getDecorationFlags() {
 }
 
 std::string CGlassDecoration::getDisplayName() {
-    return "HyprGlass";
+    return std::string(DECORATION_DISPLAY_NAME);
 }
