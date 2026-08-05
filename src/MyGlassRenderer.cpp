@@ -9,8 +9,11 @@
 
 namespace GlassRenderer {
 
-static GLuint fbId(const SP<Render::IFramebuffer>& framebuffer) {
-    return dynamic_cast<Render::GL::CGLFramebuffer*>(framebuffer.get())->getFBID();
+GLuint fbId(const SP<Render::IFramebuffer>& framebuffer) {
+    if (!framebuffer)
+        return 0;
+    auto* glFb = dynamic_cast<Render::GL::CGLFramebuffer*>(framebuffer.get());
+    return glFb ? glFb->getFBID() : 0;
 }
 
 static void uploadThemeUniforms(const SResolveContext& ctx) {
@@ -84,6 +87,16 @@ void sampleBackground(SP<Render::IFramebuffer>& sampleFramebuffer, SP<Render::IF
     glBindFramebuffer(GL_FRAMEBUFFER, fbId(sampleFramebuffer));
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     glClear(GL_COLOR_BUFFER_BIT);
+
+    // A window fully outside the framebuffer (or degenerate 0-size clamp)
+    // yields srcX0 >= srcX1 etc. glBlitFramebuffer requires strictly
+    // increasing coordinates; passing a degenerate rect is undefined on some
+    // drivers. Skip the blit in that case — the cleared (transparent) sample
+    // is a safe fallback.
+    if (srcX0 >= srcX1 || srcY0 >= srcY1 || dstX0 >= dstX1 || dstY0 >= dstY1) {
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        return;
+    }
 
     glBindFramebuffer(GL_READ_FRAMEBUFFER, fbId(sourceFramebuffer));
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbId(sampleFramebuffer));

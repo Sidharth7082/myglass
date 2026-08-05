@@ -72,4 +72,4 @@ inline std::unique_ptr<SGlobalState> g_pGlobalState;
 inline constexpr std::string_view PLUGIN_NAME        = "myglass";
 inline constexpr std::string_view PLUGIN_DESCRIPTION = "Apple-style Liquid Glass effect";
 inline constexpr std::string_view PLUGIN_AUTHOR      = "Capture";
-inline constexpr std::string_view PLUGIN_VERSION     = "1.0.0";
+inline constexpr std::string_view PLUGIN_VERSION     = "1.4.0";

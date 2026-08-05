@@ -11,9 +11,14 @@ std::string CShaderManager::loadShaderSource(const char* fileName) {
     if (SHADERS.contains(fileName))
         return SHADERS.at(fileName);
 
-    const std::string message = std::format("[{}] Failed to load shader: {}", PLUGIN_NAME, fileName);
-    HyprlandAPI::addNotification(PHANDLE, message, CHyprColor{1.0, 0.2, 0.2, 1.0}, 5000);
-    throw std::runtime_error(message);
+    // Never throw from here: this runs on the render thread (and during plugin
+    // init). An uncaught exception escaping the render path terminates the
+    // compositor (SIGABRT) instead of degrading gracefully. The compile
+    // callers already post a failure notification and return false.
+    HyprlandAPI::addNotification(PHANDLE,
+        std::format("[{}] Failed to load shader: {}", PLUGIN_NAME, fileName),
+        CHyprColor{1.0, 0.2, 0.2, 1.0}, 5000);
+    return "";
 }
 
 bool CShaderManager::compileGlassShader() {

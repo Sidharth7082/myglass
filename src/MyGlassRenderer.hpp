@@ -13,6 +13,14 @@ namespace GlassRenderer {
 
 inline constexpr int SAMPLE_PADDING_PX = 60;
 
+// Resolve the GL FBO id of a framebuffer. Returns 0 (the default framebuffer)
+// for null or non-GL framebuffers instead of dereferencing — all framebuffers
+// in this plugin are created via g_pHyprRenderer->createFB() (CGLFramebuffer),
+// but a null deref on the render thread would segfault the compositor.
+// Defined in MyGlassRenderer.cpp (needs Render::GL::CGLFramebuffer, which
+// requires <hyprland/src/render/OpenGL.hpp>).
+GLuint fbId(const SP<Render::IFramebuffer>& framebuffer);
+
 // Maximum downscale factor for blur sampling. Half-res (2) is 4x cheaper
 // per blur pass. Only applied when blur is strong enough to hide the lower
 // resolution — weak blur at half-res shows visible pixelation.

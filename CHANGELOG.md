@@ -1,4 +1,18 @@
 
+## [v1.4.0] - 2026-08-05
+
+### Bug Fixes & Stability
+* **Fixed Hyprland crash on config reload (SIGABRT in `commitPendingPresets`)**: the plugin's config-commit paths (both `pluginInit` and the `config.reloaded` event listener) are now exception-safe. Previously an uncaught exception from the async reload event terminated the whole compositor (`hyprlandCrashReport96.txt`: abort during `commitPendingPresets` called from `pluginInit`). A config failure now surfaces as a notification instead of killing Hyprland.
+* **Correct version reporting**: `PLUGIN_VERSION` was frozen at `"1.0.0"` since the HyprGlass rename, so `hyprctl plugin list` always showed the wrong version. It now reports the actual release (1.4.0).
+* **Hyprland 0.56.1 commit pin**: added the missing `commit_pins` entry for Hyprland 0.56.1 → this release, so `hyprpm` rebuilds the matching release instead of silently keeping a stale cached build.
+* **No more exceptions from the render thread**: `loadShaderSource()` no longer throws; shader load failures degrade to a notification and a skipped effect.
+* **Null-safety hardening**: framebuffer ID lookups (`fbId`) and layer-surface compositing no longer dereference potentially null GL framebuffers/objects.
+* **Off-screen windows**: degenerate `glBlitFramebuffer` regions (window fully outside the framebuffer) are skipped — previously undefined behavior on some GPU drivers.
+
+### Documentation
+* Rewrote `README.md` (bigger, more informative: how it works, full presets reference, layer-surface setup, performance notes, troubleshooting, FAQ, and more).
+* `ROADMAP.md`: marked v1.2.0/v1.3.0 as Released, added the v1.4.0 milestone.
+
 ## [v1.3.0] - 2026-08-05
 
 ### Bug Fixes

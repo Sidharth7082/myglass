@@ -262,12 +262,28 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE handle) {
     });
 
     static auto onConfigReloaded = Event::bus()->m_events.config.reloaded.listen([&]() {
-        initConfigPointers(PHANDLE, g_pGlobalState->config);
-        commitPendingPresets();
-        parseLayerNamespaceFilters();
-        commitPendingLayers(); // merge Lua layer() calls on top of string config
-        validateConfig();
-        g_pGlobalState->sceneGeneration.clear();
+        // A failure while applying user config (bad preset value, filesystem
+        // hiccup, allocation failure) must not abort the compositor mid-reload.
+        try {
+            initConfigPointers(PHANDLE, g_pGlobalState->config);
+            commitPendingPresets();
+            parseLayerNamespaceFilters();
+            commitPendingLayers(); // merge Lua layer() calls on top of string config
+            validateConfig();
+            g_pGlobalState->sceneGeneration.clear();
+        } catch (const std::exception& e) {
+            HyprlandAPI::addNotificationV2(PHANDLE, {
+                {"text", std::format("[{}] Config reload failed: {}", PLUGIN_NAME, e.what())},
+                {"time", (uint64_t)5000},
+                {"color", CHyprColor{1.0, 0.5, 0.1, 1.0}},
+            });
+        } catch (...) {
+            HyprlandAPI::addNotificationV2(PHANDLE, {
+                {"text", std::format("[{}] Config reload failed with an unknown error", PLUGIN_NAME)},
+                {"time", (uint64_t)5000},
+                {"color", CHyprColor{1.0, 0.5, 0.1, 1.0}},
+            });
+        }
     });
 
 
@@ -309,11 +325,29 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE handle) {
     }
 
     HyprlandAPI::reloadConfig();
-    initConfigPointers(PHANDLE, g_pGlobalState->config);
-    commitPendingPresets();
-    parseLayerNamespaceFilters();
-    commitPendingLayers();
-    validateConfig();
+    // Wrap the post-reload config commit so any exception (bad preset data,
+    // allocation failure) surfaces as a notification instead of aborting
+    // Hyprland during plugin load (see hyprlandCrashReport: SIGABRT in
+    // commitPendingPresets).
+    try {
+        initConfigPointers(PHANDLE, g_pGlobalState->config);
+        commitPendingPresets();
+        parseLayerNamespaceFilters();
+        commitPendingLayers();
+        validateConfig();
+    } catch (const std::exception& e) {
+        HyprlandAPI::addNotificationV2(PHANDLE, {
+            {"text", std::format("[{}] Config init failed: {}", PLUGIN_NAME, e.what())},
+            {"time", (uint64_t)5000},
+            {"color", CHyprColor{1.0, 0.5, 0.1, 1.0}},
+        });
+    } catch (...) {
+        HyprlandAPI::addNotificationV2(PHANDLE, {
+            {"text", std::format("[{}] Config init failed with an unknown error", PLUGIN_NAME)},
+            {"time", (uint64_t)5000},
+            {"color", CHyprColor{1.0, 0.5, 0.1, 1.0}},
+        });
+    }
 
     return {std::string(PLUGIN_NAME), std::string(PLUGIN_DESCRIPTION), std::string(PLUGIN_AUTHOR), std::string(PLUGIN_VERSION)};
 }

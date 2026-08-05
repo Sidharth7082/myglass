@@ -192,7 +192,7 @@ void CGlassLayerSurface::sampleAndRedirect(PHLMONITOR monitor, float alpha) {
     m_savedCurrentFB = source;
 
     g_pHyprRenderer->m_renderData.currentFB = m_surfaceTempFramebuffer;
-    glBindFramebuffer(GL_FRAMEBUFFER, dynamic_cast<Render::GL::CGLFramebuffer*>(m_surfaceTempFramebuffer.get())->getFBID());
+    glBindFramebuffer(GL_FRAMEBUFFER, GlassRenderer::fbId(m_surfaceTempFramebuffer));
 
     CBox clearBox = transformBox;
     clearBox.expand(GlassRenderer::SAMPLE_PADDING_PX);
@@ -211,8 +211,16 @@ void CGlassLayerSurface::compositeAndRestore(PHLMONITOR monitor, float alpha) {
     // Restore the original currentFB before compositing
     if (m_savedCurrentFB) {
         g_pHyprRenderer->m_renderData.currentFB = m_savedCurrentFB;
-        glBindFramebuffer(GL_FRAMEBUFFER, dynamic_cast<Render::GL::CGLFramebuffer*>(m_savedCurrentFB.get())->getFBID());
+        glBindFramebuffer(GL_FRAMEBUFFER, GlassRenderer::fbId(m_savedCurrentFB));
         m_savedCurrentFB.reset();
+    }
+
+    // sampleAndRedirect may have bailed out before creating the temp FBO
+    // (missing source framebuffer, no cached sample, etc.). Nothing to
+    // composite in that case — don't dereference a null texture.
+    if (!m_surfaceTempFramebuffer || !m_surfaceTempFramebuffer->getTexture()) {
+        m_hasCachedSample = false;
+        return;
     }
 
     auto& shaderManager = g_pGlobalState->shaderManager;
