@@ -1,4 +1,12 @@
 
+## [v1.3.0] - 2026-08-05
+
+### Bug Fixes
+* **Prevent duplicate glass decorations**: the duplicate-guard in `onNewWindow()` compared `getDisplayName()` against `"MyGlass"` while the decoration returned `"HyprGlass"`, so the guard never matched. A window whose open event fired twice (e.g. remap) could receive a second glass decoration, doubling render passes and causing layering artifacts. The display name is now a single shared constant (`DECORATION_DISPLAY_NAME`) used by both `getDisplayName()` and the guard.
+
+### Documentation
+* Overhauled `README.md`: added badges, a table of contents, Features & Requirements sections, an Uninstall section, and reorganized content for easier navigation.
+
 ## [v1.2.0] - 2026-08-04
 
 ### Features & Design System

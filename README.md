@@ -7,57 +7,48 @@
 *Make your windows look like shiny frosted liquid glass in seconds!*
 
 [![Build Status](https://img.shields.io/github/actions/workflow/status/Sidharth7082/myglass/build.yml?branch=main&style=for-the-badge&logo=github)](https://github.com/Sidharth7082/myglass/actions/workflows/build.yml)
-[![Configuration Guide](https://img.shields.io/badge/Documentation-Config%20Guide-FF4500?style=for-the-badge&logo=bookstack&logoColor=white)](CONFIG_GUIDE.md)
+[![Release](https://img.shields.io/github/v/release/Sidharth7082/myglass?style=for-the-badge&logo=github&label=latest)](https://github.com/Sidharth7082/myglass/releases)
+[![Stars](https://img.shields.io/github/stars/Sidharth7082/myglass?style=for-the-badge&logo=github)](https://github.com/Sidharth7082/myglass/stargazers)
+[![License](https://img.shields.io/github/license/Sidharth7082/myglass?style=for-the-badge&color=blue)](LICENSE)
+[![Hyprland](https://img.shields.io/badge/Hyprland-0.56.1-orange?style=for-the-badge&logo=hyprland)](https://hyprland.org)
 
----
+[Configuration Guide →](CONFIG_GUIDE.md)
 
 </div>
 
-## 🚀 1-Minute Easy Installation (Copy & Paste)
+---
 
-Just open your **Terminal** and copy-paste these commands!
+## 📑 Table of Contents
 
-### ⚡ Option A: The All-In-One Single Command (Fastest)
-
-Copy and paste this **single line** into your terminal and press `Enter`:
-
-```bash
-hyprpm add https://github.com/Sidharth7082/myglass && hyprpm update && hyprpm enable myglass && hyprctl reload
-```
-
-🎉 **That's it! MyGlass is installed and working!**
+- [Features](#-features)
+- [Screenshots](#-screenshots)
+- [Requirements](#-requirements)
+- [Quick Install](#-quick-install)
+- [Usage](#-usage)
+- [Presets Overview](#-available-presets-overview)
+- [Auto-Load on Startup](#-auto-load-on-every-startup)
+- [Configuration](#-configuration)
+- [Neovim, btop & Terminal Setup](#-neovim-btop--terminal-setup)
+- [Uninstall](#-uninstall)
+- [Build from Source](#-build-from-source)
+- [FAQ & Fixes](#-faq--fixes)
+- [License & Credits](#-license--credits)
 
 ---
 
-### 📋 Option B: Step-by-Step Installation
+## ✨ Features
 
-If you prefer doing it step-by-step:
-
-#### **Step 1:** Add MyGlass to Hyprland
-```bash
-hyprpm add https://github.com/Sidharth7082/myglass
-```
-
-#### **Step 2:** Download & Build
-```bash
-hyprpm update
-```
-
-#### **Step 3:** Enable MyGlass
-```bash
-hyprpm enable myglass
-```
-
-#### **Step 4:** Reload Hyprland
-```bash
-hyprctl reload
-```
+- **Real-time liquid glass** — frosted blur, refraction, chromatic aberration, fresnel rim glow and specular highlights rendered live behind your windows.
+- **Built-in presets** — `clear`, `terminal_glass`, `subtle`, `acrylic` and `high_contrast`, switchable at runtime.
+- **Per-window control** — use window tags to enable/disable glass or force a preset/theme on individual windows.
+- **Dark / Light themes** — theme-aware overrides so glass adapts to your palettes.
+- **Layer-surface glass** — apply the effect to bars & widgets (Waybar, SwayNC, Dynamic Island layouts).
+- **Cache-first performance** — per-monitor scene tracking reuses the blurred background when nothing changed behind the glass.
+- **One command install** — works with `hyprpm`, npm or Homebrew-style native builds.
 
 ---
 
 ## 🖼️ Screenshots
-
-<div align="center">
 
 | 🖥️ Desktop | 📊 Waybar Surface |
 | :---: | :---: |
@@ -67,80 +58,73 @@ hyprctl reload
 | :---: | :---: |
 | ![btop Glass](assets/btop.png) | ![Pavucontrol HUD](assets/pavucontrol_hud.png) |
 
-</div>
+---
+
+## 📋 Requirements
+
+- **Linux** running **Hyprland** (tested up to 0.56.x; see [`hyprpm.toml`](hyprpm.toml) for pinned versions).
+- **`hyprpm`** — ships with Hyprland. Native builds require **GCC/Clang**.
+- For terminals, enable a transparent background (see [below](#-neovim-btop--terminal-setup)).
 
 ---
 
-## 🎛️ Pavucontrol (Smoked Glass HUD Theme)
+## 🚀 Quick Install
 
-Give your **Pavucontrol** volume manager a futuristic **Smoked Glass HUD** interface that matches your terminal and desktop wallpaper!
+### ⚡ Option A: The All-In-One Single Command (Fastest)
 
-### ⚡ 1-Click Installation Command
-Run this single command in your terminal to automatically install the GTK theme and Hyprland glass transparency rules:
+Copy-paste this **single line** into a terminal and press `Enter`:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Sidharth7082/myglass/main/themes/pavucontrol/install.sh | bash
+hyprpm add https://github.com/Sidharth7082/myglass && hyprpm update && hyprpm enable myglass && hyprctl reload
 ```
 
----
+🎉 **That's it! MyGlass is installed and working!**
 
-## 🎮 How to Use It (Fun Commands)
+### 📋 Option B: Step-by-Step Install
 
-Want to turn glass on or off for a specific window or toggle modes live? Copy & paste these into your terminal!
-
-### 🚫 Turn glass OFF on the current window:
 ```bash
-hyprctl dispatch tagwindow +myglass_disabled
-```
-
-### ✨ Turn glass ON on the current window:
-```bash
-hyprctl dispatch tagwindow +myglass_enabled
-```
-
-### 💎 Change style to "Clear Glass" (Recommended Default):
-```bash
-echo "clear" > ~/.config/hypr/myglass_preset.state && hyprctl reload
-```
-
-### 💻 Change style to "Terminal Glass" (For btop & Terminals):
-```bash
-echo "terminal_glass" > ~/.config/hypr/myglass_preset.state && hyprctl reload
-```
-
-### 🎨 Change style to "Subtle Glass":
-```bash
-echo "subtle" > ~/.config/hypr/myglass_preset.state && hyprctl reload
-```
-
-### ❄️ Change style to "Acrylic Glass":
-```bash
-echo "acrylic" > ~/.config/hypr/myglass_preset.state && hyprctl reload
-```
-
-### ⚡ Change style to "High Contrast Glass":
-```bash
-echo "high_contrast" > ~/.config/hypr/myglass_preset.state && hyprctl reload
+hyprpm add https://github.com/Sidharth7082/myglass  # 1. Add repository
+hyprpm update                                      # 2. Download & build
+hyprpm enable myglass                              # 3. Enable the plugin
+hyprctl reload                                     # 4. Reload Hyprland
 ```
 
 ---
 
-## 🎨 Available Presets Overview
+## 🎮 Usage
 
-| Preset | Character & Style | Best Used For | Command |
-|---|---|---|---|
-| 💎 **`clear`** *(Recommended)* | Crystal clear see-through glass with zero blur distortion. | Wallpaper transparency, aesthetic desktop setups. | `echo "clear" > ~/.config/hypr/myglass_preset.state && hyprctl reload` |
-| 💻 **`terminal_glass`** | High text contrast with low distortion & crisp text. | Terminal windows, `btop`, Neovim, code editors. | `echo "terminal_glass" > ~/.config/hypr/myglass_preset.state && hyprctl reload` |
-| 🎨 **`subtle`** | Gentle background blur (`1.0`) with soft edge glint. | Daily app windows, file managers. | `echo "subtle" > ~/.config/hypr/myglass_preset.state && hyprctl reload` |
-| ❄️ **`acrylic`** | Heavy Windows-style acrylic frosted diffusion (`3.5` blur). | Floating panels, popups, sidebars. | `echo "acrylic" > ~/.config/hypr/myglass_preset.state && hyprctl reload` |
-| ⚡ **`high_contrast`** | Enhanced contrast multiplier & adaptive dimming. | Bright wallpapers & white themes. | `echo "high_contrast" > ~/.config/hypr/myglass_preset.state && hyprctl reload` |
+Turn glass on/off for a specific window, or switch styles live:
+
+| Action | Command |
+|---|---|
+| 🚫 Disable glass on the focused window | `hyprctl dispatch tagwindow +myglass_disabled` |
+| ✨ Enable glass on the focused window | `hyprctl dispatch tagwindow +myglass_enabled` |
+| 💎 Set **Clear Glass** (recommended) | `echo "clear" > ~/.config/hypr/myglass_preset.state && hyprctl reload` |
+| 💻 Set **Terminal Glass** (btop/terminals) | `echo "terminal_glass" > ~/.config/hypr/myglass_preset.state && hyprctl reload` |
+| 🎨 Set **Subtle Glass** | `echo "subtle" > ~/.config/hypr/myglass_preset.state && hyprctl reload` |
+| ❄️ Set **Acrylic Glass** | `echo "acrylic" > ~/.config/hypr/myglass_preset.state && hyprctl reload` |
+| ⚡ Set **High Contrast Glass** | `echo "high_contrast" > ~/.config/hypr/myglass_preset.state && hyprctl reload` |
+
+---
+
+## 💎 Available Presets Overview
+
+| Preset | Character & Style | Best Used For |
+|---|---|---|
+| 💎 **`clear`** *(Recommended)* | Crystal clear see-through glass, zero blur distortion. | Wallpaper transparency, aesthetic setups. |
+| 💻 **`terminal_glass`** | High text contrast, low distortion & crisp text. | Terminals, `btop`, Neovim, code editors. |
+| 🎨 **`subtle`** | Gentle background blur (`1.0`) with soft edge glint. | Daily app windows, file managers. |
+| ❄️ **`acrylic`** | Heavy Windows-style acrylic frosted diffusion (`3.5` blur). | Floating panels, popups, sidebars. |
+| ⚡ **`high_contrast`** | Enhanced contrast multiplier & adaptive dimming. | Bright wallpapers & white themes. |
+
+---
 
 ## 🔄 Auto-Load On Every Startup
 
-To keep MyGlass automatically active every time Hyprland starts:
+To keep MyGlass active automatically each time Hyprland starts:
 
 ### 📜 Lua Configuration (`autostart.lua`)
-Add `hl.exec_cmd("hyprpm reload -n")` inside your autostart handler:
+
 ```lua
 hl.on("hyprland.start", function ()
     hl.exec_cmd("hyprpm reload -n")
@@ -148,17 +132,18 @@ end)
 ```
 
 ### 📝 Legacy Config (`hyprland.conf`)
+
 ```ini
 exec-once = hyprpm reload -n
 ```
 
 ---
 
-## ⚙️ Easy Configuration Guide
+## ⚙️ Configuration
 
-Copy and paste this config snippet into your Hyprland configuration file to customize the look!
+You can configure MyGlass from Lua (`module/myglass.lua` / `hyprland.lua`) or the legacy `hyprland.conf` snippet. **See the [full Configuration Guide](CONFIG_GUIDE.md) for every parameter.**
 
-### 📜 Lua Configuration (`module/myglass.lua` / `hyprland.lua`)
+📜 Lua (`module/myglass.lua`):
 
 ```lua
 local state_file = (os.getenv("HOME") or "/home/capture") .. "/.config/hypr/myglass_enabled.state"
@@ -186,19 +171,19 @@ if hl.plugin and hl.plugin.myglass then
     })
 
     if enabled_state then
-        -- Add liquid glass effect to Dynamic Island layer surfaces
+        -- Liquid glass over Dynamic Island layer surfaces
         hg.layer("nowoward-capdynamic", { preset = "clear" })
         hg.layer("nowoward-capdynamic-wallpaperpicker", { preset = "clear" })
         hg.layer("nowoward-capdynamic-wlogout", { preset = "clear" })
 
-        -- Add liquid glass effect to Waybar & SwayNC
+        -- Liquid glass over Waybar & SwayNC
         hg.layer("waybar", { preset = "subtle" })
         hg.layer("swaync")
     end
 end
 ```
 
-### 📝 Legacy Config (`hyprland.conf`)
+📝 Legacy (`hyprland.conf`):
 
 ```ini
 plugin:myglass {
@@ -216,57 +201,58 @@ plugin:myglass {
 }
 ```
 
-### 💡 Neovim, btop & Terminal Setup
+---
 
-To render liquid glass seamlessly behind **Neovim**, **btop**, or terminal applications:
+## 💡 Neovim, btop & Terminal Setup
 
-1. Enable background opacity in your terminal (e.g., `background_opacity 0.75` in `~/.config/kitty/kitty.conf`).
+To render liquid glass cleanly behind **Neovim**, **btop** or terminals:
 
-2. **btop System Monitor Glass Setup**:
-   Disable `theme_background` in `~/.config/btop/btop.conf` so `btop` does not render a solid background:
+1. Enable background transparency in your terminal (e.g. `background_opacity 0.75` in `~/.config/kitty/kitty.conf`).
+
+2. **btop**: disable the solid background in `~/.config/btop/btop.conf`:
    ```ini
    color_theme = "tokyo-night"  # or high-contrast theme
    theme_background = false
    truecolor = true
    ```
-   *Tip for high text contrast over transparent wallpaper*: Create a theme file `~/.config/btop/themes/high-contrast-glass.theme` with `#ffffff` foreground colors for ultra-sharp text readability.
 
-3. **Neovim Setup**:
-   Add this snippet to your Neovim config (`~/.config/nvim/init.lua`) to make Neovim's background transparent:
-
-```lua
--- Force transparent background in Neovim for MyGlass
-for _, group in ipairs({ "Normal", "NormalNC", "LineNr", "SignColumn", "NormalFloat" }) do
-    vim.api.nvim_set_hl(0, group, { bg = "NONE", ctermbg = "NONE" })
-end
-```
+3. **Neovim**: force transparent background in `~/.config/nvim/init.lua`:
+   ```lua
+   -- Force transparent background in Neovim for MyGlass
+   for _, group in ipairs({ "Normal", "NormalNC", "LineNr", "SignColumn", "NormalFloat" }) do
+       vim.api.nvim_set_hl(0, group, { bg = "NONE", ctermbg = "NONE" })
+   end
+   ```
 
 ---
 
-## 🛠️ Manual Building (For Advanced Users)
-
-If you don't want to use `hyprpm`, you can compile directly from source code:
+## 🗑️ Uninstall
 
 ```bash
-# 1. Download the code
-git clone https://github.com/Sidharth7082/myglass.git
-cd myglass
-
-# 2. Build the plugin
-make -j$(nproc)
-
-# 3. Load the plugin into Hyprland
-hyprctl plugin load $(pwd)/myglass.so
+hyprpm disable myglass   # 1. Disable the plugin
+hyprpm remove myglass    # 2. Remove it
+hyprctl reload
 ```
 
 ---
 
-## ❓ Frequently Asked Questions & Fixes
+## 🛠️ Build From Source
+
+```bash
+git clone https://github.com/Sidharth7082/myglass.git
+cd myglass
+make -j$(nproc)                              # build myglass.so
+hyprctl plugin load $(pwd)/myglass.so        # load it (with $XDG_RUNTIME_DIR set)
+```
+
+---
+
+## ❓ FAQ & Fixes
 
 <details>
 <summary><b>1. The glass effect isn't showing up?</b></summary>
 
-Make sure your windows are slightly transparent or translucent! You can also run:
+Make sure your windows are slightly transparent or translucent. You can also run:
 ```bash
 hyprpm update && hyprctl reload
 ```
