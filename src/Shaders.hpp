@@ -136,7 +136,9 @@ void main() {
     if (cornerAlpha < 0.001) discard;
 
     float minDim = min(fullSize.x, fullSize.y);
-    float bezelWidthPx = edgeThickness * minDim;
+    // Clamp to a pixel: a user-configured edge_thickness of 0 would otherwise
+    // divide by zero below and produce NaN/Inf edge proximity.
+    float bezelWidthPx = max(edgeThickness * minDim, 1.0);
 
     // ========================================
     // EDGE PROXIMITY + DIRECTION
@@ -299,30 +301,27 @@ void main() {
     float sigma = max(blurRadius / 3.0, 0.001);
     float invSigma2 = -0.5 / (sigma * sigma);
 
-    int samples = min(int(ceil(blurRadius)), 8);
+    // Scale the tap spacing with the requested radius instead of clamping the
+    // sample count to 8 pixels. The old fixed cap silently truncated strong
+    // blurs (radius 20-40), so high blur_strength presets looked far weaker
+    // than configured. Eight evenly spread taps per side cover the requested
+    // radius at a fixed cost.
+    const int MAX_TAPS = 8;
+    float stepPx = max(blurRadius / float(MAX_TAPS), 1.0);
+    int taps = int(min(ceil(blurRadius / stepPx), float(MAX_TAPS)));
 
     // Center tap
     float w0 = 1.0;
     vec4 result = texture(tex, v_texcoord) * w0;
     float totalWeight = w0;
 
-    // Linear sampling: pair adjacent taps (i, i+1) into a single bilinear fetch.
-    // The interpolated offset between two texels yields their weighted average
-    // in one texture() call, halving the total tap count.
-    for (int i = 1; i <= samples; i += 2) {
-        float x1 = float(i);
-        float x2 = float(i + 1);
-        float w1 = exp(x1 * x1 * invSigma2);
-        float w2 = (i + 1 <= samples) ? exp(x2 * x2 * invSigma2) : 0.0;
-        float wSum = w1 + w2;
-        if (wSum < 0.0001) continue;
+    for (int i = 1; i <= taps; ++i) {
+        float x = float(i) * stepPx;
+        float w = exp(x * x * invSigma2);
 
-        // Offset biased toward the heavier weight
-        float offset = (x1 * w1 + x2 * w2) / wSum;
-
-        result += texture(tex, v_texcoord + direction * offset) * wSum;
-        result += texture(tex, v_texcoord - direction * offset) * wSum;
-        totalWeight += 2.0 * wSum;
+        result += texture(tex, v_texcoord + direction * x) * w;
+        result += texture(tex, v_texcoord - direction * x) * w;
+        totalWeight += 2.0 * w;
     }
 
     fragColor = result / totalWeight;

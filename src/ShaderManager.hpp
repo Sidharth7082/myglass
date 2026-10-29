@@ -48,6 +48,7 @@ class CShaderManager {
 
   private:
     bool m_initialized = false;
+    bool m_attempted   = false;
 
     [[nodiscard]] static std::string loadShaderSource(const char* fileName);
     [[nodiscard]] bool compileGlassShader();

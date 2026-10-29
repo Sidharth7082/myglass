@@ -80,7 +80,8 @@ static void parseKeyValuePairs(StringConfigPtr configPtr, char separator, Fn&& c
     std::string token;
     while (std::getline(stream, token, ',')) {
         auto sepPos = token.rfind(separator);
-        if (sepPos == std::string::npos) continue;
+        if (sepPos == std::string::npos || sepPos == 0)
+            continue;
 
         auto kStart = token.find_first_not_of(" \t");
         auto kEnd   = token.find_last_not_of(" \t", sepPos - 1);
@@ -149,8 +150,13 @@ static void hkRenderLayer(Render::IHyprRenderer* thisptr, PHLLS layerSurface, PH
         return !pair.second->getLayerSurface();
     });
 
-    // Only inject glass on the main surface pass, not popups
-    const bool layersOn = (config.layersEnabled && *config.layersEnabled != 0) || !g_pGlobalState->layerNamespaceFilter.empty();
+    // Only inject glass on the main surface pass, not popups. The global
+    // `enabled` switch is the master toggle: turning it off must also stop
+    // layer glass, even when layer namespaces are configured.
+    const bool globalEnabled = config.enabled && *config.enabled && **config.enabled;
+    const bool layersOn      = globalEnabled &&
+                          ((config.layersEnabled && *config.layersEnabled && **config.layersEnabled) ||
+                           !g_pGlobalState->layerNamespaceFilter.empty());
     if (!popups && layersOn && shouldGlassLayer(layerSurface)) {
         // Lazy-create per-layer state, replacing stale entries whose weak ref died
         // (can happen when a new CLayerSurface is allocated at the same address)

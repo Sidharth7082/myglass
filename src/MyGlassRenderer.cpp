@@ -92,9 +92,10 @@ void sampleBackground(SP<Render::IFramebuffer>& sampleFramebuffer, SP<Render::IF
     // yields srcX0 >= srcX1 etc. glBlitFramebuffer requires strictly
     // increasing coordinates; passing a degenerate rect is undefined on some
     // drivers. Skip the blit in that case — the cleared (transparent) sample
-    // is a safe fallback.
+    // is a safe fallback. Restore the caller's framebuffer before returning:
+    // leave no plugin-owned FBO bound to the compositor's render pass.
     if (srcX0 >= srcX1 || srcY0 >= srcY1 || dstX0 >= dstX1 || dstY0 >= dstY1) {
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glBindFramebuffer(GL_FRAMEBUFFER, fbId(sourceFramebuffer));
         return;
     }
 
@@ -103,6 +104,7 @@ void sampleBackground(SP<Render::IFramebuffer>& sampleFramebuffer, SP<Render::IF
     glBlitFramebuffer(srcX0, srcY0, srcX1, srcY1,
                       dstX0, dstY0, dstX1, dstY1,
                       GL_COLOR_BUFFER_BIT, GL_LINEAR);
+    glBindFramebuffer(GL_FRAMEBUFFER, fbId(sourceFramebuffer));
 }
 
 void blurBackground(SP<Render::IFramebuffer> sampleFramebuffer, float radius, int iterations,
@@ -172,11 +174,15 @@ void applyGlassEffect(SP<Render::IFramebuffer> sampleFramebuffer, SP<Render::IFr
     if (!sampleFramebuffer || !targetFramebuffer)
         return;
 
+    const auto monitor = g_pHyprRenderer->m_renderData.pMonitor;
+    if (!monitor)
+        return;
+
     auto& shaderManager  = g_pGlobalState->shaderManager;
     const auto& uniforms = shaderManager.glassUniforms;
 
     const auto transform = Math::wlTransformToHyprutils(
-        Math::invertTransform(g_pHyprRenderer->m_renderData.pMonitor->m_transform));
+        Math::invertTransform(monitor->m_transform));
 
     Mat3x3 glMatrix = g_pHyprRenderer->projectBoxToTarget(rawBox, transform);
     auto texture    = sampleFramebuffer->getTexture();

@@ -1,4 +1,51 @@
 
+## [v1.5.0] - 2026-10-29
+
+### Bug Fixes & Rendering
+* **Blur strength is no longer silently truncated**: the gaussian blur shader
+  clamped the kernel to 8 *pixels*, so any `blur_strength` above ~0.66 produced
+  a far weaker blur than configured (radius 20-40 collapsed to 8 px). Tap spacing
+  now scales with the requested radius at a fixed 8-taps-per-side cost. Measured
+  on a translucent window: edge gradient 2.99 → 0.43 for the same setting.
+* **Blur setting changes now invalidate the cached sample**: `CGlassDecoration`
+  and `CGlassLayerSurface` cached the blurred background without remembering the
+  parameters used to produce it, so switching preset or editing `blur_strength`
+  on a static scene kept rendering the old blur. Both now track
+  (`blurStrength`, `blurIterations`, `downscale`) and re-sample on change.
+* **Window pass bounding boxes use logical coordinates**: `CGlassPassElement::
+  boundingBox()` returned framebuffer pixels while `IPassElement::boundingBox()`
+  is defined in monitor-local logical units, so pass damage and live-blur regions
+  were wrong on scaled monitors.
+* **No more `RASSERT` abort when geometry is unavailable**: `needsLiveBlur()` now
+  requires a valid bounding box. Hyprland asserts that every live-blur element
+  exposes one, and a window mid-unmap could previously terminate the compositor.
+* **Layer compositing cannot use a stale sample**: `CGlassLayerSurface` tracks
+  whether the current frame actually redirected into the temp FBO; the composite
+  pass bails out (and clears its cache) instead of blending a previous frame.
+* **Degenerate rect handling no longer leaves the wrong FBO bound**:
+  `sampleBackground()` restores the caller's framebuffer on the off-screen early
+  return and after the blit.
+* **Shader compilation is attempted once**: `CShaderManager` gained an
+  `m_attempted` flag, so a failed compile no longer retries (and re-notifies) on
+  every rendered frame.
+* **`edge_thickness = 0` no longer produces NaN**: the glass shader clamps the
+  bezel width to 1 px before dividing by it.
+* **Global `enabled` now gates layer glass**: disabling the plugin previously
+  left layer-surface glass active whenever namespace filters were configured.
+
+### Build System
+* **Header dependency tracking**: the Makefile emits `.d` files (`-MMD -MP`), so
+  editing a header rebuilds the affected objects instead of silently linking
+  stale code.
+* **Compiler detection**: `--no-gnu-unique` is now applied by matching the
+  compiler basename, so `/usr/bin/g++` is recognised and `clang++` is not.
+* **Malformed config tokens are skipped**: `parseKeyValuePairs()` ignores entries
+  with an empty key (`=value`) instead of parsing garbage.
+
+### Compatibility
+* **Hyprland 0.56.2 support**: added the `commit_pins` entry mapping Hyprland
+  0.56.2 to this release and bumped `.hyprland-version`.
+
 ## [v1.4.0] - 2026-08-05
 
 ### Bug Fixes & Stability

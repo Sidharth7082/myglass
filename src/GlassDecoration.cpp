@@ -209,22 +209,31 @@ void CGlassDecoration::renderPass(PHLMONITOR monitor, const float& alpha) {
     const auto activeWs              = monitor->m_activeWorkspace;
     const bool isAnimating           = (activeWs && activeWs->m_renderOffset->isBeingAnimated()) ||
                                        (window->m_workspace && !window->m_pinned && window->m_workspace->m_renderOffset->isBeingAnimated());
-    const bool backgroundChanged    = !m_hasCachedSample ||
-                                       currentGeneration != m_lastSceneGeneration ||
-                                       isAnimating;
+
+    const float blurStrength = resolvePresetFloat(ctx, &SPresetValues::blurStrength, &SOverridableConfig::blurStrength);
+    const int   downscale    = blurStrength >= GlassRenderer::BLUR_DOWNSCALE_THRESHOLD ? GlassRenderer::BLUR_DOWNSCALE_MAX : 1;
+    const int   blurIterations =
+        std::clamp(static_cast<int>(resolvePresetInt(ctx, &SPresetValues::blurIterations, &SOverridableConfig::blurIterations)), 1, 5);
+
+    // Blur settings can change at runtime (config reload, preset switch) while
+    // the scene behind the window stays identical. Compare against the values
+    // the cached blur was produced with so new settings always take effect.
+    const bool blurParamsChanged = blurStrength != m_cachedBlurStrength || blurIterations != m_cachedBlurIterations ||
+                                   downscale != m_cachedDownscale;
+    const bool backgroundChanged = !m_hasCachedSample || currentGeneration != m_lastSceneGeneration || isAnimating ||
+                                   blurParamsChanged;
 
     if (backgroundChanged) {
-        float blurStrength   = resolvePresetFloat(ctx, &SPresetValues::blurStrength, &SOverridableConfig::blurStrength);
-        int downscale        = blurStrength >= GlassRenderer::BLUR_DOWNSCALE_THRESHOLD ? GlassRenderer::BLUR_DOWNSCALE_MAX : 1;
-
         GlassRenderer::sampleBackground(m_sampleFramebuffer, source, transformBox, m_samplePaddingRatio, downscale);
 
-        float blurRadius     = blurStrength * 12.0f / downscale;
-        int blurIterations   = std::clamp(static_cast<int>(resolvePresetInt(ctx, &SPresetValues::blurIterations, &SOverridableConfig::blurIterations)), 1, 5);
+        float blurRadius = blurStrength * 12.0f / downscale;
         GlassRenderer::blurBackground(m_sampleFramebuffer, blurRadius, blurIterations, source);
 
         m_hasCachedSample     = true;
         m_lastSceneGeneration = currentGeneration;
+        m_cachedBlurStrength  = blurStrength;
+        m_cachedBlurIterations = blurIterations;
+        m_cachedDownscale     = downscale;
     }
 
     float monitorScale  = monitor->m_scale;

@@ -79,8 +79,12 @@ bool CShaderManager::compileBlurShader() {
 }
 
 void CShaderManager::initializeIfNeeded() {
-    if (m_initialized)
+    if (m_initialized || m_attempted)
         return;
+
+    // Only try once: a failed compile is reported to the user, and retrying on
+    // every rendered frame would spam notifications and waste GPU/CPU time.
+    m_attempted = true;
 
     if (!compileGlassShader())
         return;
@@ -95,4 +99,5 @@ void CShaderManager::destroy() noexcept {
     glassShader->destroy();
     blurShader->destroy();
     m_initialized = false;
+    m_attempted   = false;
 }

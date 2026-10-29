@@ -113,6 +113,12 @@ void CGlassLayerSurface::damageIfMoved() {
 }
 
 void CGlassLayerSurface::sampleAndRedirect(PHLMONITOR monitor, float alpha) {
+    (void)alpha; // only used by compositeAndRestore
+
+    // This frame starts without a redirected surface; compositeAndRestore only
+    // consumes the temp FBO when this frame actually rendered into it.
+    m_redirectedThisFrame = false;
+
     auto& shaderManager = g_pGlobalState->shaderManager;
     shaderManager.initializeIfNeeded();
 
@@ -133,40 +139,49 @@ void CGlassLayerSurface::sampleAndRedirect(PHLMONITOR monitor, float alpha) {
 
     CBox transformBox = transformedLayerBox(*layerBox, monitor);
 
+    const bool isDark         = resolveThemeIsDark();
+    const std::string preset  = resolvePresetName();
+    const SResolveContext ctx = {preset, isDark, g_pGlobalState->config, g_pGlobalState->customPresets};
+
+    const float blurStrength = resolvePresetFloat(ctx, &SPresetValues::blurStrength, &SOverridableConfig::blurStrength);
+    const int   downscale    = blurStrength >= GlassRenderer::BLUR_DOWNSCALE_THRESHOLD ? GlassRenderer::BLUR_DOWNSCALE_MAX : 1;
+    const int   blurIterations =
+        std::clamp(static_cast<int>(resolvePresetInt(ctx, &SPresetValues::blurIterations, &SOverridableConfig::blurIterations)), 1, 5);
+
     // Decide whether we need to re-sample and re-blur the background.
     // When only the layer surface content changed (e.g. waybar clock tick)
     // but no window moved behind us, we reuse the cached blurred background.
     // This skips the most expensive GPU work (blit + 6 blur passes).
     const uint64_t currentGeneration = g_pGlobalState->getSceneGeneration(monitor);
-    const auto activeWs = monitor->m_activeWorkspace;
-    const bool isAnimating = layerSurface->positionAnimation()->isBeingAnimated() ||
+    const auto     activeWs          = monitor->m_activeWorkspace;
+    const bool     isAnimating       = layerSurface->positionAnimation()->isBeingAnimated() ||
                              layerSurface->sizeAnimation()->isBeingAnimated() ||
                              layerSurface->alpha()[Desktop::View::LS_ALPHA_FADE]->isBeingAnimated() ||
                              (activeWs && activeWs->m_renderOffset->isBeingAnimated());
-    const bool backgroundChanged = !m_hasCachedSample ||
-                                   currentGeneration != m_lastSceneGeneration ||
-                                   isAnimating;
+
+    // Blur settings can change at runtime (config reload, preset switch) while
+    // the scene behind the layer stays identical. Compare what the cached blur
+    // was produced with so new settings always take effect.
+    const bool blurParamsChanged = blurStrength != m_cachedBlurStrength || blurIterations != m_cachedBlurIterations ||
+                                   downscale != m_cachedDownscale;
+    const bool backgroundChanged = !m_hasCachedSample || currentGeneration != m_lastSceneGeneration || isAnimating ||
+                                   blurParamsChanged;
 
     if (!layerSurface->m_mapped) {
         // During fade-out, re-sampling captures stale pixels. Reuse cached sample.
         if (!m_hasCachedSample)
             return;
     } else if (backgroundChanged) {
-        const bool isDark          = resolveThemeIsDark();
-        const std::string preset   = resolvePresetName();
-        const SResolveContext ctx  = {preset, isDark, g_pGlobalState->config, g_pGlobalState->customPresets};
-
-        float blurStrength   = resolvePresetFloat(ctx, &SPresetValues::blurStrength, &SOverridableConfig::blurStrength);
-        int downscale        = blurStrength >= GlassRenderer::BLUR_DOWNSCALE_THRESHOLD ? GlassRenderer::BLUR_DOWNSCALE_MAX : 1;
-
         GlassRenderer::sampleBackground(m_sampleFramebuffer, source, transformBox, m_samplePaddingRatio, downscale);
 
-        float blurRadius     = blurStrength * 12.0f / downscale;
-        int blurIterations   = std::clamp(static_cast<int>(resolvePresetInt(ctx, &SPresetValues::blurIterations, &SOverridableConfig::blurIterations)), 1, 5);
+        float blurRadius = blurStrength * 12.0f / downscale;
         GlassRenderer::blurBackground(m_sampleFramebuffer, blurRadius, blurIterations, source);
 
-        m_hasCachedSample      = true;
-        m_lastSceneGeneration  = currentGeneration;
+        m_hasCachedSample        = true;
+        m_lastSceneGeneration    = currentGeneration;
+        m_cachedBlurStrength     = blurStrength;
+        m_cachedBlurIterations   = blurIterations;
+        m_cachedDownscale        = downscale;
     }
     // else: background unchanged, reuse cached blur — skip 7 GPU operations
 
@@ -175,6 +190,8 @@ void CGlassLayerSurface::sampleAndRedirect(PHLMONITOR monitor, float alpha) {
     // the surface into this FBO. compositeAndRestore uses its alpha as a mask.
     int monitorWidth  = static_cast<int>(monitor->m_transformedSize.x);
     int monitorHeight = static_cast<int>(monitor->m_transformedSize.y);
+    if (monitorWidth <= 0 || monitorHeight <= 0)
+        return;
 
     // In FP16/HDR mode, the source FB uses RGBA16F which has full alpha precision.
     // Use the source format to avoid clipping HDR color values.
@@ -205,6 +222,8 @@ void CGlassLayerSurface::sampleAndRedirect(PHLMONITOR monitor, float alpha) {
         glClear(GL_COLOR_BUFFER_BIT);
         g_pHyprOpenGL->scissor(nullptr);
     }
+
+    m_redirectedThisFrame = true;
 }
 
 void CGlassLayerSurface::compositeAndRestore(PHLMONITOR monitor, float alpha) {
@@ -214,6 +233,15 @@ void CGlassLayerSurface::compositeAndRestore(PHLMONITOR monitor, float alpha) {
         glBindFramebuffer(GL_FRAMEBUFFER, GlassRenderer::fbId(m_savedCurrentFB));
         m_savedCurrentFB.reset();
     }
+
+    // sampleAndRedirect may have bailed out before redirecting, in which case
+    // the original renderLayer painted straight into the real framebuffer.
+    // Never composite a stale temp buffer in that case.
+    if (!m_redirectedThisFrame) {
+        m_hasCachedSample = false;
+        return;
+    }
+    m_redirectedThisFrame = false;
 
     // sampleAndRedirect may have bailed out before creating the temp FBO
     // (missing source framebuffer, no cached sample, etc.). Nothing to
@@ -242,9 +270,9 @@ void CGlassLayerSurface::compositeAndRestore(PHLMONITOR monitor, float alpha) {
     CBox rawBox       = *layerBox;
     CBox transformBox = transformedLayerBox(rawBox, monitor);
 
-    const bool isDark          = resolveThemeIsDark();
-    const std::string preset   = resolvePresetName();
-    const SResolveContext ctx  = {preset, isDark, g_pGlobalState->config, g_pGlobalState->customPresets};
+    const bool isDark         = resolveThemeIsDark();
+    const std::string preset  = resolvePresetName();
+    const SResolveContext ctx = {preset, isDark, g_pGlobalState->config, g_pGlobalState->customPresets};
 
     float cornerRadius  = 0.0f;
     float roundingPower = 2.0f;
@@ -254,9 +282,11 @@ void CGlassLayerSurface::compositeAndRestore(PHLMONITOR monitor, float alpha) {
     // so we map from the glass quad UV to monitor UV.
     int monitorWidth  = static_cast<int>(monitor->m_transformedSize.x);
     int monitorHeight = static_cast<int>(monitor->m_transformedSize.y);
+    if (monitorWidth <= 0 || monitorHeight <= 0)
+        return;
 
     float maskThreshold = 0.001f;
-    auto threshIt = g_pGlobalState->layerNamespaceMaskThresholds.find(layerSurface->m_namespace);
+    auto  threshIt      = g_pGlobalState->layerNamespaceMaskThresholds.find(layerSurface->m_namespace);
     if (threshIt != g_pGlobalState->layerNamespaceMaskThresholds.end())
         maskThreshold = threshIt->second;
 
@@ -266,11 +296,11 @@ void CGlassLayerSurface::compositeAndRestore(PHLMONITOR monitor, float alpha) {
     maskThreshold *= std::clamp(alpha, 0.0f, 1.0f);
 
     GlassRenderer::SMaskInfo maskInfo{
-        .textureId         = m_surfaceTempFramebuffer->getTexture()->m_texID,
-        .target            = GL_TEXTURE_2D,
-        .uvOffset          = {transformBox.x / monitorWidth, transformBox.y / monitorHeight},
-        .uvScale           = {transformBox.w / monitorWidth, transformBox.h / monitorHeight},
-        .alphaThreshold    = maskThreshold,
+        .textureId      = m_surfaceTempFramebuffer->getTexture()->m_texID,
+        .target         = GL_TEXTURE_2D,
+        .uvOffset       = {transformBox.x / monitorWidth, transformBox.y / monitorHeight},
+        .uvScale        = {transformBox.w / monitorWidth, transformBox.h / monitorHeight},
+        .alphaThreshold = maskThreshold,
     };
 
     // The glass shader composites both the glass effect and the surface content

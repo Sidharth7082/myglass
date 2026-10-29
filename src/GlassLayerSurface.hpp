@@ -36,6 +36,16 @@ class CGlassLayerSurface {
     // surface content changed (e.g. clock tick) but the background didn't.
     uint64_t     m_lastSceneGeneration = 0;
 
+    // Blur settings used for the cached sample. Runtime config/preset changes
+    // must trigger a re-blur even when the scene itself did not change.
+    float        m_cachedBlurStrength   = -1.0f;
+    int          m_cachedBlurIterations = -1;
+    int          m_cachedDownscale      = 0;
+
+    // True only for frames where the surface was rendered into the temp FBO.
+    // Prevents compositing stale temp content if the redirect was skipped.
+    bool         m_redirectedThisFrame = false;
+
     // Saved currentFB pointer, restored in compositeAndRestore
     SP<Render::IFramebuffer> m_savedCurrentFB;
 

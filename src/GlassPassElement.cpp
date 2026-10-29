@@ -23,14 +23,20 @@ std::optional<CBox> CGlassPassElement::boundingBox() {
 
     const auto monitor = g_pHyprRenderer->m_renderData.pMonitor.lock();
     auto box = WindowGeometry::computeWindowBox(window, monitor);
-    if (!box)
+    if (!box || !monitor)
         return std::nullopt;
 
-    // Expand by our sampling padding so the render pass damages the full
-    // area we read from. Without this, wallpaper outside the window box
-    // but inside our padding isn't re-rendered, leaving stale content.
-    const float padding = GlassRenderer::SAMPLE_PADDING_PX / monitor->m_scale;
-    box->expand(padding);
+    // IPassElement::boundingBox() is defined in monitor-local LOGICAL
+    // coordinates; computeWindowBox() returns framebuffer pixels. Convert
+    // before expanding with the (logical) sampling padding so Hyprland's
+    // pass simplification / live-blur region math scales correctly.
+    const float scale = monitor->m_scale > 0.0f ? monitor->m_scale : 1.0f;
+    box->scale(1.0 / scale).expand(GlassRenderer::SAMPLE_PADDING_PX / scale).noNegativeSize().round();
+
+    if (!std::isfinite(box->x) || !std::isfinite(box->y) || !std::isfinite(box->w) || !std::isfinite(box->h) || box->w <= 0.0 ||
+        box->h <= 0.0)
+        return std::nullopt;
+
     return box;
 }
 
@@ -41,7 +47,11 @@ bool CGlassPassElement::needsLiveBlur() {
     // in the padded sampling region, causing blinking artifacts.
     // Layers don't need this — they have their own blur cache with
     // scene generation tracking.
-    return m_data.decoration.valid() && m_data.decoration->getOwner();
+    //
+    // Hyprland requires every live-blur element to expose a bounding box
+    // (RASSERT in CRenderPass::render), so only request live blur while the
+    // geometry is actually available.
+    return m_data.decoration.valid() && m_data.decoration->getOwner() && boundingBox().has_value();
 }
 
 bool CGlassPassElement::needsPrecomputeBlur() {
@@ -49,5 +59,5 @@ bool CGlassPassElement::needsPrecomputeBlur() {
 }
 
 bool CGlassPassElement::disableSimplification() {
-    return m_data.decoration.valid() && m_data.decoration->getOwner();
+    return needsLiveBlur();
 }

@@ -43,7 +43,11 @@ bool CGlassLayerPassElement::needsLiveBlur() {
     // glass to sample a mix of fresh wallpaper and its own stale output.
     // Per-monitor sceneGeneration prevents non-focused monitors from
     // re-sampling, so the continuous damage cost is limited.
-    return m_data.layerState && m_data.layerState->getLayerSurface();
+    //
+    // Hyprland requires every live-blur element to expose a bounding box
+    // (RASSERT in CRenderPass::render); invalid geometry (zero-sized layer,
+    // monitor teardown) must not request live blur.
+    return m_data.layerState && m_data.layerState->getLayerSurface() && boundingBox().has_value();
 }
 
 bool CGlassLayerPassElement::needsPrecomputeBlur() {
@@ -51,5 +55,5 @@ bool CGlassLayerPassElement::needsPrecomputeBlur() {
 }
 
 bool CGlassLayerPassElement::disableSimplification() {
-    return m_data.layerState && m_data.layerState->getLayerSurface();
+    return needsLiveBlur();
 }

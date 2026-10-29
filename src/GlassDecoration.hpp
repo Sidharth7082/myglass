@@ -39,6 +39,12 @@ class CGlassDecoration : public IHyprWindowDecoration {
     bool     m_hasCachedSample = false;
     uint64_t m_lastSceneGeneration = 0;
 
+    // Blur settings used for the cached sample. Runtime config/preset changes
+    // must trigger a re-blur even when the scene itself did not change.
+    float    m_cachedBlurStrength   = -1.0f;
+    int      m_cachedBlurIterations = -1;
+    int      m_cachedDownscale      = 0;
+
     // Whether we currently hold the noblur window property on our window.
     // Glass replaces Hyprland's blur, and Hyprland's cached-blur optimization
     // (blur:new_optimizations) composites translucent windows against a

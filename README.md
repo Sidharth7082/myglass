@@ -11,10 +11,10 @@
 [![Stars](https://img.shields.io/github/stars/Sidharth7082/myglass?style=for-the-badge&logo=github)](https://github.com/Sidharth7082/myglass/stargazers)
 [![Downloads](https://img.shields.io/github/downloads/Sidharth7082/myglass/total?style=for-the-badge&logo=github)](https://github.com/Sidharth7082/myglass/releases)
 [![License](https://img.shields.io/github/license/Sidharth7082/myglass?style=for-the-badge&color=blue)](LICENSE)
-[![Hyprland](https://img.shields.io/badge/Hyprland-0.56.1-orange?style=for-the-badge&logo=hyprland)](https://hyprland.org)
+[![Hyprland](https://img.shields.io/badge/Hyprland-0.56.2-orange?style=for-the-badge&logo=hyprland)](https://hyprland.org)
 [![Made with C++23](https://img.shields.io/badge/C%2B%2B-23-blue?style=for-the-badge&logo=cplusplus)](https://en.cppreference.com/w/cpp/23)
 
-*Latest release: **v1.4.0** — crash-proof config reloading, correct version reporting & hardened GL pipeline*
+*Latest release: **v1.5.0** — accurate blur strength, cache invalidation on setting changes & correct pass geometry*
 
 [Configuration Guide →](CONFIG_GUIDE.md) · [Changelog →](CHANGELOG.md) · [Roadmap →](ROADMAP.md)
 
@@ -69,7 +69,8 @@ Everything is computed **live on the GPU** with a custom GLES3 fragment shader, 
 | 🧱 **Layer-surface glass** | Apply the effect to bars & widgets: Waybar, SwayNC, Dynamic Island layouts, wlogout, OSDs… |
 | 🎛️ **Custom presets** | Define your own presets with inheritance (`inherits = "acrylic"`) from Lua or the legacy config. |
 | ⚡ **Cache-first performance** | Per-monitor scene tracking reuses the blurred background when nothing behind the glass changed — an idle desktop costs ~0 extra GPU work. |
-| 🛡️ **Crash-proof by design (v1.4.0)** | Exception-safe init/reload paths, no throws on the render thread, null-safe GL calls — a bad config can no longer take down Hyprland. |
+| 🛡️ **Crash-proof by design (v1.4.0+)** | Exception-safe init/reload paths, no throws on the render thread, null-safe GL calls — a bad config can no longer take down Hyprland. |
+| 🎯 **True-to-setting blur (v1.5.0)** | The blur kernel scales with `blur_strength` instead of capping at 8 px, and runtime changes always re-sample the background. |
 | 📦 **One-command install** | Install via `hyprpm` or build the `.so` yourself in seconds. |
 
 ---
@@ -144,7 +145,7 @@ You should see:
 ```
 Plugin myglass by Capture:
     Handle: ...
-    Version: 1.4.0
+    Version: 1.5.0
     Description: Apple-style Liquid Glass effect
 ```
 
@@ -428,7 +429,7 @@ exec-once = hyprpm reload -n
 <details>
 <summary><b>1. The glass effect isn't showing up?</b></summary>
 
-- Make sure the plugin is loaded: `hyprctl plugin list` should show `myglass` version `1.4.0`.
+- Make sure the plugin is loaded: `hyprctl plugin list` should show `myglass` version `1.5.0`.
 - Windows must be **translucent** — set a transparent background in your terminal/editor (see [Neovim, btop & Terminal Setup](#-neovim-btop--terminal-setup)).
 - Confirm the effect is enabled: `hyprctl getoption plugin:myglass:enabled` should report `1`.
 - Try a reload: `hyprpm update && hyprctl reload`.
@@ -443,7 +444,7 @@ Yes. **v1.4.0** fixes a crash where an exception during config reload aborted th
 <details>
 <summary><b>3. `hyprctl plugin list` shows version 1.0.0 / an old version?</b></summary>
 
-You're running a stale cached build. hyprpm only rebuilds when the pinned commit changes — run `hyprpm update` (v1.4.0 adds an explicit pin for Hyprland 0.56.1 so the matching release is always selected), then restart Hyprland.
+You're running a stale cached build. hyprpm only rebuilds when the pinned commit changes — run `hyprpm update` (v1.5.0 adds an explicit pin for Hyprland 0.56.2 so the matching release is always selected), then restart Hyprland.
 </details>
 
 <details>
@@ -556,6 +557,7 @@ hyprctl reload
 
 | Version | Date | Highlights |
 |---|---|---|
+| **v1.5.0** | 2026-10-29 | Accurate blur strength (kernel no longer capped at 8 px), cache invalidation on setting changes, logical-coordinate pass boxes, layer-glass master toggle, header dependency tracking, Hyprland 0.56.2 pin |
 | **v1.4.0** | 2026-08-05 | Crash-proof config reload (SIGABRT fix), correct version reporting, Hyprland 0.56.1 pin, exception & null-safety hardening, README overhaul |
 | **v1.3.0** | 2026-08-05 | Fix duplicate glass decorations on window remap; README overhaul |
 | **v1.2.0** | 2026-08-04 | `terminal_glass` & `acrylic` presets; pavucontrol Smoked Glass HUD; btop integration; preset state file |

@@ -1,12 +1,15 @@
 # MyGlass Plugin
 
 CXX ?= g++
-CXXFLAGS = -fPIC -g -O2 -std=c++23
+CXXFLAGS = -fPIC -g -O2 -std=c++23 -MMD -MP
 LDFLAGS = -shared
 INCLUDES = $(shell pkg-config --cflags hyprland pixman-1 libdrm)
 LIBS = $(shell pkg-config --libs hyprland)
 
-ifeq ($(basename $(CXX)),g++)
+# --no-gnu-unique is required for plugins loaded into Hyprland with GCC.
+# Match the compiler basename so /usr/bin/g++ also works and clang++ is not
+# accidentally treated as g++.
+ifneq (,$(filter g++,$(notdir $(CXX))))
 	CXXFLAGS += --no-gnu-unique
 endif
 
@@ -24,6 +27,7 @@ SOURCES = \
 	src/ShaderManager.cpp
 
 OBJ = $(SOURCES:.cpp=.o)
+DEP = $(OBJ:.o=.d)
 
 all: $(TARGET)
 
@@ -37,6 +41,8 @@ $(TARGET): $(OBJ)
 	@echo "Done!"
 
 clean:
-	rm -f $(OBJ) $(TARGET)
+	rm -f $(OBJ) $(DEP) $(TARGET)
+
+-include $(DEP)
 
 .PHONY: all clean
